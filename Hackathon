@@ -1,0 +1,41 @@
+Smarter Payment and Gen Z experience 
+
+1.	Financial Education and Empowerment: Gen Z faces unique financial challenges, such as student loans, gig economy work, and the need for responsible money management. How can you leverage smarter payment technologies to provide financial education and empower Gen Z users with tools for budgeting, saving, investing, or making informed financial decisions? Can you integrate educational resources or personalized financial insights into your solution?
+
+2.	Personalization and Financial Education: Design an experience that caters to the unique needs and preferences of Gen Z. Incorporate personalized recommendations, spending insights, budgeting tools, and gamified features that promote financial literacy and responsible spending habits. The solution should empower Gen Z users to make informed financial decisions and develop healthy financial habits.
+
+Success Criteria
+Evaluation Criteria:
+1.	Innovation and Creativity: The uniqueness and originality of the solution in addressing Gen Z's payment challenges.
+2.	User Experience: The intuitiveness, ease of use, and overall appeal of the solution for Gen Z users.
+3.	Technological Implementation: The effective use of relevant technologies, integration capabilities, and scalability of the solution.
+4.	Financial Empowerment: The extent to which the solution promotes financial literacy, personalized financial management, and responsible spending habits among Gen Z users.
+5.	Security and Privacy: The strength of security measures implemented to protect user data, transactions, and privacy.
+6.	Viability and Potential Impact: The market potential, sustainability, and scalability of the solution, as well as its potential to revolutionize the financial experience for Gen Z.
+
+Problem Statement: Design an innovative digital solution that provides personalized financial education and empowers Generation Z (Gen Z) users to develop healthy financial habits through a combination of personalized recommendations, spending insights, budgeting tools, and gamified features.
+
+Context: Generation Z, typically born between 1997 and 2012, represents a significant portion of the population and possesses distinct characteristics and preferences when it comes to managing their finances. They have grown up in a highly digitized world, and traditional financial education methods often fail to resonate with them. Therefore, there is a pressing need to create an engaging and personalized financial experience that caters to the unique needs and preferences of Gen Z users.
+
+Assumptions:
+1.	Gen Z users are tech-savvy and comfortable using digital platforms and mobile applications for managing their finances.
+2.	Gen Z users may have limited financial knowledge and may benefit from educational content and tools tailored to their specific needs.
+3.	Personalized recommendations, spending insights, and budgeting tools are effective in influencing Gen Z users' financial behavior and promoting responsible spending habits.
+4.	Gamification elements, such as challenges, rewards, and achievements, can enhance Gen Z users' engagement and motivation to learn about personal finance.
+
+Scope: The proposed solution should encompass the following elements:
+1.	Personalized Recommendations: Develop an intelligent system that analyzes Gen Z users' financial data, such as income, expenses, and spending patterns, to provide tailored recommendations for optimizing their financial decisions. These recommendations may include suggestions for budgeting, savings, investment options, or debt management strategies.
+2.	Spending Insights: Create interactive visualizations and analytics tools that offer Gen Z users a comprehensive overview of their spending habits. Provide insights on their expenditure categories, trends, and comparisons with peer groups to help them understand and evaluate their financial choices.
+3.	Budgeting Tools: Design user-friendly budgeting tools that allow Gen Z users to set financial goals, allocate budgets for different categories (e.g., groceries, entertainment, savings), and track their progress over time. Enable notifications and reminders to help users stay on track and make adjustments as needed.
+4.	Gamified Features: Integrate gamification elements into the solution to make financial education enjoyable and engaging for Gen Z users. This may include interactive quizzes, challenges, virtual rewards, or leaderboards that encourage learning, active participation, and healthy competition among users.
+5.	Educational Content: Develop a repository of educational content, such as articles, videos, podcasts, or interactive tutorials, focused on relevant financial topics for Gen Z users. Cover subjects like budgeting, saving, investing, credit management, and understanding financial products.
+6.	User Interface and Experience: Create an intuitive and visually appealing user interface that aligns with Gen Z's preferences and provides a seamless experience across multiple devices, including mobile phones and tablets.
+7.	Data Security and Privacy: Implement robust security measures to protect user data, ensuring compliance with relevant data privacy regulations. Clearly communicate the security protocols and privacy practices to gain user trust.
+
+
+Problem Title: "Transforming Personalization in Banking: Revolutionizing the Customer Experience"
+Problem Statement: In the era of digital transformation, banks are facing the challenge of delivering personalized experiences that meet the unique needs and preferences of each customer. As customer expectations evolve, traditional banking methods fall short in providing tailored solutions and experiences. To remain competitive and enhance customer satisfaction, banks are seeking innovative solutions that leverage technology to deliver highly personalized banking experiences.
+Your task in this hackathon is to develop a cutting-edge solution that addresses the challenges faced by banks in personalizing their services and interactions with customers. Your solution should empower banks to understand their customers better, anticipate their needs, and provide personalized recommendations, products, and services that align with their financial goals and lifestyles.
+Scope
+1.	Personalized Recommendations: Design an intelligent system that analyzes customer data and transactions to provide personalized recommendations for banking products and services. This may include personalized investment advice, credit options, savings plans, or insurance coverage that align with each customer's financial objectives and risk appetite.
+
