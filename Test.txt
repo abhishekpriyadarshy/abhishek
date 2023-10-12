@@ -1,1 +1,35 @@
-Hello
+import speech_recognition as sr
+import os
+import pyautogui
+
+recognizer = sr.Recognizer()
+
+def listen():
+    with sr.Microphone() as source:
+        print("Listening...")
+        recognizer.adjust_for_ambient_noise(source)
+        audio = recognizer.listen(source, timeout=5)
+        try:
+            return recognizer.recognize_google(audio)
+        except sr.UnknownValueError:
+            return "Sorry, I didn't catch that."
+
+def open_application(app_name):
+    try:
+        os.system(f"start {app_name}")
+    except Exception as e:
+        print(f"Error: {e}")
+
+def write_note(note_text):
+    pyautogui.write(note_text)
+
+while True:
+    command = listen().lower()
+
+    if "open" in command:
+        app_name = command.split("open ", 1)[1]
+        open_application(app_name)
+
+    if "write" in command:
+        note_text = command.split("write ", 1)[1]
+        write_note(note_text)
