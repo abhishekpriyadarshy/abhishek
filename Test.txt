@@ -33,3 +33,38 @@ while True:
     if "write" in command:
         note_text = command.split("write ", 1)[1]
         write_note(note_text)
+------------------------------------------------------------
+import os
+
+# Function to open applications
+def open_application(app_name):
+    try:
+        os.system(f"start {app_name}")
+        print(f"Opening {app_name}...")
+    except Exception as e:
+        print(f"Error: {e}")
+
+# Function to write a note to a text file
+def write_note(note_text):
+    try:
+        with open("note.txt", "a") as file:
+            file.write(note_text + "\n")
+        print("Note written successfully.")
+    except Exception as e:
+        print(f"Error: {e}")
+
+# Main loop for user interaction
+while True:
+    command = input("Enter a command (e.g., 'open Notepad', 'write This is a note', 'exit'): ").lower()
+
+    if command == "exit":
+        print("Goodbye!")
+        break
+    elif command.startswith("open "):
+        app_name = command.split("open ", 1)[1]
+        open_application(app_name)
+    elif command.startswith("write "):
+        note_text = command.split("write ", 1)[1]
+        write_note(note_text)
+    else:
+        print("Unrecognized command. Try again.")
