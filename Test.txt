@@ -68,3 +68,33 @@ while True:
         write_note(note_text)
     else:
         print("Unrecognized command. Try again.")
+
+--------------------------------------------------------------------------
+from selenium import webdriver
+
+# Path to the Chrome WebDriver executable (replace with your own path)
+webdriver_path = "path/to/chromedriver"
+
+# URL of the web page you want to interact with
+url = "https://example.com"
+
+# Field and value to input
+field_id = "your_field_id"  # Replace with the ID or other locator of the field
+value_to_fill = "Your value here"
+
+# Create a Chrome WebDriver instance
+driver = webdriver.Chrome(executable_path=webdriver_path)
+
+# Open the web page
+driver.get(url)
+
+# Find the field by its ID and fill it with the value
+field = driver.find_element_by_id(field_id)
+field.send_keys(value_to_fill)
+
+# Optionally, submit the form (if needed)
+# field.submit()
+
+# Close the browser
+driver.quit()
+
