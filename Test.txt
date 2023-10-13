@@ -127,3 +127,36 @@ if __name__ == "__main__":
     query = input("Enter your search query (e.g., name, firm, or CRD#): ")
     search_finra(query)
 
+--------------------------------Meeting --------------------------
+import win32com.client
+import datetime
+import json
+
+# Create a new Outlook Application object
+outlook = win32com.client.Dispatch("Outlook.Application")
+namespace = outlook.GetNamespace("MAPI")
+
+# Get the Calendar folder
+calendar = namespace.GetDefaultFolder(9)  # 9 represents olFolderCalendar
+
+# Get today's date
+today = datetime.datetime.now().date()
+
+# Create a list to store the meeting data
+meeting_data = []
+
+# Loop through calendar items and filter for today's meetings
+for item in calendar.Items:
+    if item.Start.date() == today:
+        meeting_info = {
+            "Subject": item.Subject,
+            "Start Time": item.Start,
+            "End Time": item.End
+        }
+        meeting_data.append(meeting_info)
+
+# Convert the meeting data to JSON
+meeting_json = json.dumps(meeting_data, indent=4)
+
+# Print or return the JSON data
+print(meeting_json)
