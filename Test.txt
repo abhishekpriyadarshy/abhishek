@@ -98,3 +98,32 @@ field.send_keys(value_to_fill)
 # Close the browser
 driver.quit()
 
+-------------------FINRA DATA Search---------------------------------------------------
+import requests
+from bs4 import BeautifulSoup
+
+def search_finra(query):
+    base_url = "https://brokercheck.finra.org/"
+    search_url = f"{base_url}search.html"
+
+    # Send a GET request to the search URL with the query as a parameter
+    response = requests.get(search_url, params={"Search": query})
+
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, "html.parser")
+        # Extract and display relevant information
+        results = soup.find_all("div", class_="results-item")
+        for result in results:
+            name = result.find("h4", class_="registration-detail-person-name")
+            details = result.find("p", class_="registration-detail-person-bio")
+            if name and details:
+                print("Name:", name.text)
+                print("Details:", details.text)
+                print()
+    else:
+        print("Failed to retrieve data. Status Code:", response.status_code)
+
+if __name__ == "__main__":
+    query = input("Enter your search query (e.g., name, firm, or CRD#): ")
+    search_finra(query)
+
