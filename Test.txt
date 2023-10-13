@@ -160,3 +160,33 @@ meeting_json = json.dumps(meeting_data, indent=4)
 
 # Print or return the JSON data
 print(meeting_json)
+---------------------------AFInd Unread message--------------
+import win32com.client
+from datetime import datetime, timedelta
+
+# Create an Outlook Application object
+outlook = win32com.client.Dispatch("Outlook.Application")
+
+# Get the MAPI namespace
+namespace = outlook.GetNamespace("MAPI")
+
+# Get the Inbox folder
+inbox = namespace.GetDefaultFolder(6)  # 6 represents olFolderInbox
+
+# Calculate the date for today
+today = datetime.now().date()
+
+# Calculate the start and end of today
+start_of_day = today
+end_of_day = today + timedelta(days=1)
+
+# Get the items in the Inbox
+items = inbox.Items
+
+# Filter for unread emails that arrived today
+unread_emails_today = items.Restrict(f"[UnRead] = True AND [ReceivedTime] >= '{start_of_day}' AND [ReceivedTime] < '{end_of_day}'")
+
+# Loop through and print the subject of unread emails
+for email in unread_emails_today:
+    print("Subject:", email.Subject)
+
