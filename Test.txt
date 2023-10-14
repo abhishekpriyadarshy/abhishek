@@ -189,4 +189,35 @@ unread_emails_today = items.Restrict(f"[UnRead] = True AND [ReceivedTime] >= '{s
 # Loop through and print the subject of unread emails
 for email in unread_emails_today:
     print("Subject:", email.Subject)
+-----------------------Finra Latest News Update--------------------
+import requests
+from bs4 import BeautifulSoup
+
+# Define the URL of FINRA's newsroom
+finra_news_url = "https://www.finra.org/media-center"
+
+# Send a GET request to the website
+response = requests.get(finra_news_url)
+
+if response.status_code == 200:
+    # Parse the HTML content of the page
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Find the news articles on the page
+    news_articles = soup.find_all("div", class_="col-12 col-lg-6 col-xl-4 media-item")
+
+    if news_articles:
+        for article in news_articles:
+            # Extract the title and link of each news article
+            title = article.find("h3").text
+            link = "https://www.finra.org" + article.find("a")["href"]
+            
+            print("Title:", title)
+            print("Link:", link)
+            print()
+    else:
+        print("No news articles found on the page.")
+else:
+    print("Failed to retrieve the FINRA news page.")
+
 
