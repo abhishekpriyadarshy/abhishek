@@ -1,11 +1,20 @@
-<asp:RegularExpressionValidator ID="revDOB" runat="server"
-    ControlToValidate="txtDOB"
-    ErrorMessage="Invalid DOB format (MM DD)"
+<asp:RegularExpressionValidator ID="revCardNumber" runat="server"
+    ControlToValidate="txtCardNumber"
+    ErrorMessage="Invalid credit card number format"
     Display="Dynamic"
     ForeColor="Red"
-    ValidationExpression="(0[1-9]|1[0-2]) (0[1-9]|[12][0-9]|3[01])"
+    ValidationExpression="^(4\d{15}|5[1-5]\d{14})$"
     ValidationGroup="ValidationGroup1"
 />
+<asp:RegularExpressionValidator ID="revName" runat="server"
+    ControlToValidate="txtName"
+    ErrorMessage="Invalid name format"
+    Display="Dynamic"
+    ForeColor="Red"
+    ValidationExpression="^[A-Za-z\s\-']+$"
+    ValidationGroup="ValidationGroup1"
+/>
+
 
 
 
