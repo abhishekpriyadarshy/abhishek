@@ -1,3 +1,51 @@
+Certainly! Below is a simple example of Java code that demonstrates how to consume a SOAP web service using JAX-WS. Make sure to replace the placeholder URLs and methods with the actual ones from your SOAP service.
+
+```java
+import javax.xml.namespace.QName;
+import javax.xml.ws.Service;
+import java.net.URL;
+
+public class SoapClient {
+
+    public static void main(String[] args) {
+        try {
+            // Replace with your actual WSDL URL
+            URL url = new URL("http://example.com/YourService?wsdl");
+
+            // Replace with your service namespace and service name
+            QName qname = new QName("http://example.com/", "YourService");
+
+            Service service = Service.create(url, qname);
+
+            // Replace with your port type interface
+            YourPortType port = service.getPort(YourPortType.class);
+
+            // Call your web service methods
+            String result = port.yourWebServiceMethod("parameterValue");
+
+            // Process the result as needed
+            System.out.println("Result from the web service: " + result);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+Make sure to replace the placeholder values with your actual service URL, namespace, service name, port type, and method names. Additionally, you'll need the generated Java classes from the WSDL, which you can generate using tools like `wsimport`:
+
+```bash
+wsimport -keep http://example.com/YourService?wsdl
+```
+
+This command will generate the necessary Java classes to interact with the SOAP service. Include these classes in your project along with the code above.
+
+
+
+
+
+
 <asp:RegularExpressionValidator ID="revCardNumber" runat="server"
     ControlToValidate="txtCardNumber"
     ErrorMessage="Invalid credit card number format"
