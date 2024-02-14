@@ -1,292 +1,33 @@
-Certainly! Below is a simple example of Java code that demonstrates how to consume a SOAP web service using JAX-WS. Make sure to replace the placeholder URLs and methods with the actual ones from your SOAP service.
+using System.Net.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
-```java
-import javax.xml.namespace.QName;
-import javax.xml.ws.Service;
-import java.net.URL;
+namespace YourNamespace
+{
+    public static class HttpClientWrapper
+    {
+        public static IHttpClientBuilder AddLoggingDistributedMessageHandler(
+            this IHttpClientBuilder builder,
+            ILogger<LoggingDistributedMessageHandler> logger)
+        {
+            return builder.AddHttpMessageHandler<LoggingDistributedMessageHandler>()
+                          .AddHttpMessageHandler<DistributedMessageHandler>()
+                          .AddPolicyHandler(GetRetryPolicy())
+                          .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler())
+                          .ConfigureHttpClient(client => client.Timeout = TimeSpan.FromSeconds(30))
+                          .ConfigureServices(services => services.AddTransient<LoggingDistributedMessageHandler>());
+        }
 
-public class SoapClient {
-
-    public static void main(String[] args) {
-        try {
-            // Replace with your actual WSDL URL
-            URL url = new URL("http://example.com/YourService?wsdl");
-
-            // Replace with your service namespace and service name
-            QName qname = new QName("http://example.com/", "YourService");
-
-            Service service = Service.create(url, qname);
-
-            // Replace with your port type interface
-            YourPortType port = service.getPort(YourPortType.class);
-
-            // Call your web service methods
-            String result = port.yourWebServiceMethod("parameterValue");
-
-            // Process the result as needed
-            System.out.println("Result from the web service: " + result);
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+        {
+            // Implement your retry policy logic here
+            // For example, Polly's Retry policy
+            return Policy<HttpResponseMessage>
+                .Handle<SomeExceptionType>()
+                .RetryAsync(3, (ex, retryCount, context) =>
+                {
+                    // Log the retry information if needed
+                });
         }
     }
 }
-```
-
-Make sure to replace the placeholder values with your actual service URL, namespace, service name, port type, and method names. Additionally, you'll need the generated Java classes from the WSDL, which you can generate using tools like `wsimport`:
-
-```bash
-wsimport -keep http://example.com/YourService?wsdl
-```
-
-This command will generate the necessary Java classes to interact with the SOAP service. Include these classes in your project along with the code above.
-
-
-
-
-
-
-<asp:RegularExpressionValidator ID="revCardNumber" runat="server"
-    ControlToValidate="txtCardNumber"
-    ErrorMessage="Invalid credit card number format"
-    Display="Dynamic"
-    ForeColor="Red"
-    ValidationExpression="^(4\d{15}|5[1-5]\d{14})$"
-    ValidationGroup="ValidationGroup1"
-/>
-<asp:RegularExpressionValidator ID="revName" runat="server"
-    ControlToValidate="txtName"
-    ErrorMessage="Invalid name format"
-    Display="Dynamic"
-    ForeColor="Red"
-    ValidationExpression="^[A-Za-z\s\-']+$"
-    ValidationGroup="ValidationGroup1"
-/>
-
-
-
-
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.76 Safari/537.36', "Upgrade-Insecure-Requests": "1","DNT": "1","Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8","Accept-Language": "en-US,en;q=0.5","Accept-Encoding": "gzip, deflate"}
-import speech_recognition as sr
-import os
-import pyautogui
-
-recognizer = sr.Recognizer()
-
-def listen():
-    with sr.Microphone() as source:
-        print("Listening...")
-        recognizer.adjust_for_ambient_noise(source)
-        audio = recognizer.listen(source, timeout=5)
-        try:
-            return recognizer.recognize_google(audio)
-        except sr.UnknownValueError:
-            return "Sorry, I didn't catch that."
-
-def open_application(app_name):
-    try:
-        os.system(f"start {app_name}")
-    except Exception as e:
-        print(f"Error: {e}")
-
-def write_note(note_text):
-    pyautogui.write(note_text)
-
-while True:
-    command = listen().lower()
-
-    if "open" in command:
-        app_name = command.split("open ", 1)[1]
-        open_application(app_name)
-
-    if "write" in command:
-        note_text = command.split("write ", 1)[1]
-        write_note(note_text)
-------------------------------------------------------------
-import os
-
-# Function to open applications
-def open_application(app_name):
-    try:
-        os.system(f"start {app_name}")
-        print(f"Opening {app_name}...")
-    except Exception as e:
-        print(f"Error: {e}")
-
-# Function to write a note to a text file
-def write_note(note_text):
-    try:
-        with open("note.txt", "a") as file:
-            file.write(note_text + "\n")
-        print("Note written successfully.")
-    except Exception as e:
-        print(f"Error: {e}")
-
-# Main loop for user interaction
-while True:
-    command = input("Enter a command (e.g., 'open Notepad', 'write This is a note', 'exit'): ").lower()
-
-    if command == "exit":
-        print("Goodbye!")
-        break
-    elif command.startswith("open "):
-        app_name = command.split("open ", 1)[1]
-        open_application(app_name)
-    elif command.startswith("write "):
-        note_text = command.split("write ", 1)[1]
-        write_note(note_text)
-    else:
-        print("Unrecognized command. Try again.")
-
---------------------------------------------------------------------------
-from selenium import webdriver
-
-# Path to the Chrome WebDriver executable (replace with your own path)
-webdriver_path = "path/to/chromedriver"
-
-# URL of the web page you want to interact with
-url = "https://example.com"
-
-# Field and value to input
-field_id = "your_field_id"  # Replace with the ID or other locator of the field
-value_to_fill = "Your value here"
-
-# Create a Chrome WebDriver instance
-driver = webdriver.Chrome(executable_path=webdriver_path)
-
-# Open the web page
-driver.get(url)
-
-# Find the field by its ID and fill it with the value
-field = driver.find_element_by_id(field_id)
-field.send_keys(value_to_fill)
-
-# Optionally, submit the form (if needed)
-# field.submit()
-
-# Close the browser
-driver.quit()
-
--------------------FINRA DATA Search---------------------------------------------------
-import requests
-from bs4 import BeautifulSoup
-
-def search_finra(query):
-    base_url = "https://brokercheck.finra.org/"
-    search_url = f"{base_url}search.html"
-
-    # Send a GET request to the search URL with the query as a parameter
-    response = requests.get(search_url, params={"Search": query})
-
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, "html.parser")
-        # Extract and display relevant information
-        results = soup.find_all("div", class_="results-item")
-        for result in results:
-            name = result.find("h4", class_="registration-detail-person-name")
-            details = result.find("p", class_="registration-detail-person-bio")
-            if name and details:
-                print("Name:", name.text)
-                print("Details:", details.text)
-                print()
-    else:
-        print("Failed to retrieve data. Status Code:", response.status_code)
-
-if __name__ == "__main__":
-    query = input("Enter your search query (e.g., name, firm, or CRD#): ")
-    search_finra(query)
-
---------------------------------Meeting --------------------------
-import win32com.client
-import datetime
-import json
-
-# Create a new Outlook Application object
-outlook = win32com.client.Dispatch("Outlook.Application")
-namespace = outlook.GetNamespace("MAPI")
-
-# Get the Calendar folder
-calendar = namespace.GetDefaultFolder(9)  # 9 represents olFolderCalendar
-
-# Get today's date
-today = datetime.datetime.now().date()
-
-# Create a list to store the meeting data
-meeting_data = []
-
-# Loop through calendar items and filter for today's meetings
-for item in calendar.Items:
-    if item.Start.date() == today:
-        meeting_info = {
-            "Subject": item.Subject,
-            "Start Time": item.Start,
-            "End Time": item.End
-        }
-        meeting_data.append(meeting_info)
-
-# Convert the meeting data to JSON
-meeting_json = json.dumps(meeting_data, indent=4)
-
-# Print or return the JSON data
-print(meeting_json)
----------------------------AFInd Unread message--------------
-import win32com.client
-from datetime import datetime, timedelta
-
-# Create an Outlook Application object
-outlook = win32com.client.Dispatch("Outlook.Application")
-
-# Get the MAPI namespace
-namespace = outlook.GetNamespace("MAPI")
-
-# Get the Inbox folder
-inbox = namespace.GetDefaultFolder(6)  # 6 represents olFolderInbox
-
-# Calculate the date for today
-today = datetime.now().date()
-
-# Calculate the start and end of today
-start_of_day = today
-end_of_day = today + timedelta(days=1)
-
-# Get the items in the Inbox
-items = inbox.Items
-
-# Filter for unread emails that arrived today
-unread_emails_today = items.Restrict(f"[UnRead] = True AND [ReceivedTime] >= '{start_of_day}' AND [ReceivedTime] < '{end_of_day}'")
-
-# Loop through and print the subject of unread emails
-for email in unread_emails_today:
-    print("Subject:", email.Subject)
------------------------Finra Latest News Update--------------------
-import requests
-from bs4 import BeautifulSoup
-
-# Define the URL of FINRA's newsroom
-finra_news_url = "https://www.finra.org/media-center"
-
-# Send a GET request to the website
-response = requests.get(finra_news_url)
-
-if response.status_code == 200:
-    # Parse the HTML content of the page
-    soup = BeautifulSoup(response.text, 'html.parser')
-
-    # Find the news articles on the page
-    news_articles = soup.find_all("div", class_="col-12 col-lg-6 col-xl-4 media-item")
-
-    if news_articles:
-        for article in news_articles:
-            # Extract the title and link of each news article
-            title = article.find("h3").text
-            link = "https://www.finra.org" + article.find("a")["href"]
-            
-            print("Title:", title)
-            print("Link:", link)
-            print()
-    else:
-        print("No news articles found on the page.")
-else:
-    print("Failed to retrieve the FINRA news page.")
-
-
