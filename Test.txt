@@ -31,3 +31,71 @@ namespace YourNamespace
         }
     }
 }
+-------------------------------------------------------------------------------
+Use above class 
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using System.Net.Http;
+using YourNamespace;
+
+[ApiController]
+[Route("api/[controller]")]
+public class YourController : ControllerBase
+{
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<YourController> _logger;
+
+    public YourController(IHttpClientFactory httpClientFactory, ILogger<YourController> logger)
+    {
+        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> MakeHttpRequest()
+    {
+        try
+        {
+            // Use the configured HttpClient named "SampleClient" with the LoggingDistributedMessageHandler
+            var httpClient = _httpClientFactory.CreateClient("SampleClient");
+
+            // Build the request
+            var request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri("https://azure.myportal.com")
+            };
+
+            // Send the request and get the response
+            var response = await httpClient.SendAsync(request).ConfigureAwait(false);
+
+            // Process the response as needed
+            // ...
+
+            return Ok("Request successful");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error making HTTP request");
+            return StatusCode(500, "Internal server error");
+        }
+    }
+}
+
+
+In your Startup.cs file, you would use the AddLoggingDistributedMessageHandler extension method from the HttpClientWrapper class during the configuration of your services:
+
+csharp
+Copy code
+public void ConfigureServices(IServiceCollection services)
+{
+    // Other service configurations...
+
+    services.AddHttpClient("SampleClient")
+            .AddLoggingDistributedMessageHandler(services.BuildServiceProvider().GetService<ILogger<LoggingDistributedMessageHandler>>());
+    
+    services.AddTransient<YourController>();
+
+    // More configurations...
+}
+This way, you've encapsulated the HttpClient configuration logic in the HttpClientWrapper class, and you can easily use it in your controllers or other parts of your Web API application. Adjust the example according to your specific requirements and dependencies.
