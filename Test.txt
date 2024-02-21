@@ -1,101 +1,135 @@
-using System.Net.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+Certainly! To create a wrapper library for the provided code and add some enhancements, you can follow a similar approach as before. I'll create a HttpClientWrapper class in a new library that extends the functionality, including additional enhancements. Please note that the enhancements I've added are illustrative, and you may need to tailor them based on your specific requirements.
 
-namespace YourNamespace
+Create a new class library project:
+
+bash
+Copy code
+dotnet new classlib -n YourWrapperLibrary
+Reference Microsoft.Extensions.Http and Polly NuGet packages:
+
+bash
+Copy code
+dotnet add package Microsoft.Extensions.Http
+dotnet add package Polly
+Modify the .csproj file of your wrapper library:
+
+xml
+Copy code
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>10</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
+    <PackageReference Include="Polly" Version="7.2.2" />
+    <!-- Add other dependencies as needed -->
+  </ItemGroup>
+
+</Project>
+Update the versions to the latest available.
+
+Create a HttpClientWrapper class in your wrapper library:
+
+csharp
+Copy code
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Polly;
+using System;
+using System.Net.Http;
+using System.Threading.Tasks;
+
+namespace YourWrapperLibrary
 {
-    public static class HttpClientWrapper
+    public class HttpClientWrapper
     {
-        public static IHttpClientBuilder AddLoggingDistributedMessageHandler(
-            this IHttpClientBuilder builder,
-            ILogger<LoggingDistributedMessageHandler> logger)
+        private const string CLIENT_NAME = "YourClientName";
+
+        public static IHostBuilder CreateFaultBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .ConfigureServices((hostContext, services) =>
+                {
+                    services.AddTransient<DistributedMessageHandler>();
+
+                    services.AddHttpClient(CLIENT_NAME)
+                        .AddHttpMessageHandler<DistributedMessageHandler>()
+                        .AddPolicyHandler(GetRetryPolicy())
+                        .AddPolicyHandler(GetCircuitBreakerPolicy());
+
+                    services.AddHttpContextAccessor();
+                });
+
+        public static async Task<HttpResponseMessage> SendHttpRequestAsync(string url)
         {
-            return builder.AddHttpMessageHandler<LoggingDistributedMessageHandler>()
-                          .AddHttpMessageHandler<DistributedMessageHandler>()
-                          .AddPolicyHandler(GetRetryPolicy())
-                          .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler())
-                          .ConfigureHttpClient(client => client.Timeout = TimeSpan.FromSeconds(30))
-                          .ConfigureServices(services => services.AddTransient<LoggingDistributedMessageHandler>());
+            var host = CreateHostBuilder(Array.Empty<string>()).Build();
+            var service = host.Services.GetRequiredService<IHttpClientFactory>();
+            var httpClient = service.CreateClient(CLIENT_NAME);
+
+            var request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(url)
+            };
+
+            return await httpClient.SendAsync(request).ConfigureAwait(false);
         }
 
         private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
         {
             // Implement your retry policy logic here
-            // For example, Polly's Retry policy
             return Policy<HttpResponseMessage>
-                .Handle<SomeExceptionType>()
+                .Handle<HttpRequestException>()
                 .RetryAsync(3, (ex, retryCount, context) =>
                 {
                     // Log the retry information if needed
                 });
         }
-    }
-}
--------------------------------------------------------------------------------
-Use above class 
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System.Net.Http;
-using YourNamespace;
 
-[ApiController]
-[Route("api/[controller]")]
-public class YourController : ControllerBase
-{
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<YourController> _logger;
-
-    public YourController(IHttpClientFactory httpClientFactory, ILogger<YourController> logger)
-    {
-        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> MakeHttpRequest()
-    {
-        try
+        private static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
         {
-            // Use the configured HttpClient named "SampleClient" with the LoggingDistributedMessageHandler
-            var httpClient = _httpClientFactory.CreateClient("SampleClient");
-
-            // Build the request
-            var request = new HttpRequestMessage
-            {
-                Method = HttpMethod.Get,
-                RequestUri = new Uri("https://azure.myportal.com")
-            };
-
-            // Send the request and get the response
-            var response = await httpClient.SendAsync(request).ConfigureAwait(false);
-
-            // Process the response as needed
-            // ...
-
-            return Ok("Request successful");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error making HTTP request");
-            return StatusCode(500, "Internal server error");
+            // Implement your circuit breaker policy logic here
+            return Policy<HttpResponseMessage>
+                .Handle<HttpRequestException>()
+                .CircuitBreakerAsync(3, TimeSpan.FromSeconds(30));
         }
     }
 }
+This wrapper class includes the CreateFaultBuilder method to set up the host with services, an SendHttpRequestAsync method to send an HTTP request using the configured HttpClient, and two policies for retry and circuit breaker.
 
+Build and package your wrapper library:
 
-In your Startup.cs file, you would use the AddLoggingDistributedMessageHandler extension method from the HttpClientWrapper class during the configuration of your services:
+bash
+Copy code
+dotnet build
+dotnet pack
+Use the wrapper library in a consumer project:
 
 csharp
 Copy code
-public void ConfigureServices(IServiceCollection services)
+using System;
+using System.Net.Http;
+using System.Threading.Tasks;
+using YourWrapperLibrary;
+
+class Program
 {
-    // Other service configurations...
-
-    services.AddHttpClient("SampleClient")
-            .AddLoggingDistributedMessageHandler(services.BuildServiceProvider().GetService<ILogger<LoggingDistributedMessageHandler>>());
-    
-    services.AddTransient<YourController>();
-
-    // More configurations...
+    static async Task Main()
+    {
+        var response = await HttpClientWrapper.SendHttpRequestAsync("http://azure.abhi.net");
+        
+        // Process the response as needed
+        Console.WriteLine($"Received response: {response.StatusCode}");
+    }
 }
-This way, you've encapsulated the HttpClient configuration logic in the HttpClientWrapper class, and you can easily use it in your controllers or other parts of your Web API application. Adjust the example according to your specific requirements and dependencies.
+Ensure you reference your wrapper library in the consumer project.
+
+This example provides a basic illustration of how you can wrap and enhance the HttpClient functionality. Adjust the code based on your specific enhancements and requirements.
+
+
+
+
+
