@@ -1,135 +1,89 @@
-Certainly! To create a wrapper library for the provided code and add some enhancements, you can follow a similar approach as before. I'll create a HttpClientWrapper class in a new library that extends the functionality, including additional enhancements. Please note that the enhancements I've added are illustrative, and you may need to tailor them based on your specific requirements.
-
-Create a new class library project:
-
-bash
-Copy code
-dotnet new classlib -n YourWrapperLibrary
-Reference Microsoft.Extensions.Http and Polly NuGet packages:
-
-bash
-Copy code
-dotnet add package Microsoft.Extensions.Http
-dotnet add package Polly
-Modify the .csproj file of your wrapper library:
-
-xml
-Copy code
-<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <OutputType>Library</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
-    <LangVersion>10</LangVersion>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
-    <PackageReference Include="Polly" Version="7.2.2" />
-    <!-- Add other dependencies as needed -->
-  </ItemGroup>
-
-</Project>
-Update the versions to the latest available.
-
-Create a HttpClientWrapper class in your wrapper library:
-
-csharp
-Copy code
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Polly;
 using System;
-using System.Net.Http;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
-namespace YourWrapperLibrary
+public static class LoggerWrapper
 {
-    public class HttpClientWrapper
+    private static readonly InternalLogger Logger = new InternalLogger();
+
+    // Other properties and fields...
+
+    public static Guid InstanceId => Logger.InstanceId;
+
+    public static string ApplicationName => Configuration["ApplicationName"] ?? HelperMethod.ExecutableName;
+
+    // Use the updated LoggerProperties class
+    public static LoggerProperties DefaultProperties { get; } = new LoggerProperties();
+
+    public static void LogInitialization(string logMessage, string? source = null, [CallerMemberName] string? methodName = null, LoggerProperties? properties = null)
     {
-        private const string CLIENT_NAME = "YourClientName";
-
-        public static IHostBuilder CreateFaultBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureServices((hostContext, services) =>
-                {
-                    services.AddTransient<DistributedMessageHandler>();
-
-                    services.AddHttpClient(CLIENT_NAME)
-                        .AddHttpMessageHandler<DistributedMessageHandler>()
-                        .AddPolicyHandler(GetRetryPolicy())
-                        .AddPolicyHandler(GetCircuitBreakerPolicy());
-
-                    services.AddHttpContextAccessor();
-                });
-
-        public static async Task<HttpResponseMessage> SendHttpRequestAsync(string url)
+        var mergedProperties = MergeProperties(properties);
+        Logger.LogEvent(new BaseEventBuilder
         {
-            var host = CreateHostBuilder(Array.Empty<string>()).Build();
-            var service = host.Services.GetRequiredService<IHttpClientFactory>();
-            var httpClient = service.CreateClient(CLIENT_NAME);
+            EventMessage = logMessage,
+            LoggingEventlevel = LoggingEventlevels.Initialization,
+            EventSource = source,
+            MethodName = methodName,
+            AdditionalProperties = mergedProperties.AllProperties
+        });
+    }
 
-            var request = new HttpRequestMessage
+    public static void LogShutdown(string logMessage, string? source = null, [CallerMemberName] string? methodName = null, LoggerProperties? properties = null)
+    {
+        var mergedProperties = MergeProperties(properties);
+        Logger.LogEvent(new BaseEventBuilder
+        {
+            EventMessage = logMessage,
+            LoggingEventlevel = LoggingEventlevels.Shutdown,
+            EventSource = source,
+            MethodName = methodName,
+            AdditionalProperties = mergedProperties.AllProperties
+        });
+    }
+
+    public static void LogException(Exception exception, string? source, [CallerMemberName] string? methodName = null, LoggerProperties? properties = null)
+    {
+        var mergedProperties = MergeProperties(properties);
+        Logger.LogException(exception, null, source, mergedProperties, methodName);
+    }
+
+    public static void LogInformation(string logMessage, string? source, [CallerMemberName] string? methodName = null, LoggerProperties? properties = null)
+    {
+        var mergedProperties = MergeProperties(properties);
+        Logger.LogInformation(logMessage, LoggingEventlevels.Informational, source, mergedProperties.AllProperties, methodName);
+    }
+
+    public static void LogDebug(string logMessage, string? source, [CallerMemberName] string? methodName = null, LoggerProperties? properties = null)
+    {
+        var mergedProperties = MergeProperties(properties);
+        Logger.LogDebug(logMessage, LoggingEventlevels.Debug, source, mergedProperties.AllProperties, methodName);
+    }
+
+    private static LoggerProperties MergeProperties(LoggerProperties? properties)
+    {
+        var mergedProperties = new LoggerProperties();
+
+        // Merge default properties
+        foreach (var defaultProperty in DefaultProperties.AllProperties)
+        {
+            if (!mergedProperties.AllProperties.ContainsKey(defaultProperty.Key))
             {
-                Method = HttpMethod.Get,
-                RequestUri = new Uri(url)
-            };
-
-            return await httpClient.SendAsync(request).ConfigureAwait(false);
+                mergedProperties.AddProperty(defaultProperty.Key, defaultProperty.Value);
+            }
         }
 
-        private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+        // Merge consumer-added properties
+        if (properties != null)
         {
-            // Implement your retry policy logic here
-            return Policy<HttpResponseMessage>
-                .Handle<HttpRequestException>()
-                .RetryAsync(3, (ex, retryCount, context) =>
+            foreach (var consumerProperty in properties.AllProperties)
+            {
+                if (!mergedProperties.AllProperties.ContainsKey(consumerProperty.Key))
                 {
-                    // Log the retry information if needed
-                });
+                    mergedProperties.AddProperty(consumerProperty.Key, consumerProperty.Value);
+                }
+            }
         }
 
-        private static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
-        {
-            // Implement your circuit breaker policy logic here
-            return Policy<HttpResponseMessage>
-                .Handle<HttpRequestException>()
-                .CircuitBreakerAsync(3, TimeSpan.FromSeconds(30));
-        }
+        return mergedProperties;
     }
 }
-This wrapper class includes the CreateFaultBuilder method to set up the host with services, an SendHttpRequestAsync method to send an HTTP request using the configured HttpClient, and two policies for retry and circuit breaker.
-
-Build and package your wrapper library:
-
-bash
-Copy code
-dotnet build
-dotnet pack
-Use the wrapper library in a consumer project:
-
-csharp
-Copy code
-using System;
-using System.Net.Http;
-using System.Threading.Tasks;
-using YourWrapperLibrary;
-
-class Program
-{
-    static async Task Main()
-    {
-        var response = await HttpClientWrapper.SendHttpRequestAsync("http://azure.abhi.net");
-        
-        // Process the response as needed
-        Console.WriteLine($"Received response: {response.StatusCode}");
-    }
-}
-Ensure you reference your wrapper library in the consumer project.
-
-This example provides a basic illustration of how you can wrap and enhance the HttpClient functionality. Adjust the code based on your specific enhancements and requirements.
-
-
-
-
-
