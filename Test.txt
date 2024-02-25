@@ -1,70 +1,134 @@
+using Microsoft.Extensions.Logging;
 using System;
-using System.Text.RegularExpressions;
-using System.Text;
 
-public class DataMasking
+public static class LoggerUtility
 {
-    private static readonly Regex CreditCardPattern = new Regex(@"\b(\d{4}-\d{4}-\d{4}-\d{4})\b");
-    private static readonly Regex SSNPattern = new Regex(@"\b(\d{3}-\d{2}-\d{4})\b");
-    private static readonly Regex DOBPattern = new Regex(@"\b(\d{2}/\d{2}/\d{4})\b");
-    private static readonly Regex BankAccountPattern = new Regex(@"\b(\d{4}-\d{4}-\d{4}-\d{4})\b");
+    private static readonly ILogger Logger;
 
-    public static string PartialMasking(string input)
+    static LoggerUtility()
     {
-        if (string.IsNullOrEmpty(input))
-        {
-            return input;
-        }
-
-        // Perform partial masking on credit card numbers
-        input = ApplyPartialMasking(input, CreditCardPattern, 4);
-
-        // Perform partial masking on SSN
-        input = ApplyPartialMasking(input, SSNPattern, 3);
-
-        // Perform partial masking on DOB
-        input = ApplyPartialMasking(input, DOBPattern, 2);
-
-        // Perform partial masking on bank account numbers
-        input = ApplyPartialMasking(input, BankAccountPattern, 4);
-
-        return input;
+        // Set up your ILogger here, you might configure it in the application startup
+        Logger = new LoggerFactory().AddConsole().CreateLogger<LoggerUtility>();
     }
 
-    private static string ApplyPartialMasking(string input, Regex pattern, int visibleLength)
+    public static void LogMessage(string message, LogLevel logLevel, Exception exception = null)
     {
-        // Use regular expression to find matches
-        MatchCollection matches = pattern.Matches(input);
-
-        // Use StringBuilder for efficient string manipulation
-        StringBuilder maskedInput = new StringBuilder(input);
-
-        // Iterate through matches and apply partial masking
-        foreach (Match match in matches)
+        switch (logLevel)
         {
-            if (match.Groups.Count > 1)
-            {
-                // Keep only a portion of the sensitive information visible
-                string visiblePart = match.Groups[1].Value.Substring(Math.Max(0, match.Groups[1].Value.Length - visibleLength));
-                string maskedValue = new string('*', match.Groups[1].Value.Length - visiblePart.Length) + visiblePart;
-
-                // Replace the sensitive information with the masked value using StringBuilder
-                maskedInput.Replace(match.Groups[1].Value, maskedValue, match.Index, match.Length);
-            }
+            case LogLevel.Trace:
+                Logger.LogTrace(exception, message);
+                break;
+            case LogLevel.Debug:
+                Logger.LogDebug(exception, message);
+                break;
+            case LogLevel.Information:
+                Logger.LogInformation(exception, message);
+                break;
+            case LogLevel.Warning:
+                Logger.LogWarning(exception, message);
+                break;
+            case LogLevel.Error:
+                Logger.LogError(exception, message);
+                break;
+            case LogLevel.Critical:
+                Logger.LogCritical(exception, message);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(logLevel), logLevel, null);
         }
-
-        return maskedInput.ToString();
     }
+
+    public static void LogException(Exception exception, string message = null)
+    {
+        LogMessage(message ?? "An exception occurred.", LogLevel.Error, exception);
+    }
+
+    // Add additional LogXxx methods as needed
 
     public static void Main()
     {
         // Example usage
-        string inputText = "Credit Card: 1234-5678-9012-3456, SSN: 123-45-6789, DOB: 01/15/1980, Bank Account: 9876-5432-1098-7654.";
+        try
+        {
+            // Code that may throw an exception
+            throw new InvalidOperationException("An example exception.");
+        }
+        catch (Exception ex)
+        {
+            LogException(ex, "Custom error message");
+        }
 
-        // Perform partial masking on various sensitive information
-        string maskedText = PartialMasking(inputText);
+        LogMessage("Informational message", LogLevel.Information);
+        LogMessage("Debugging message", LogLevel.Debug);
+        LogMessage("Warning message", LogLevel.Warning);
+        LogMessage("Error message", LogLevel.Error);
+        LogMessage("Critical message", LogLevel.Critical);
+    }
+}
+using Microsoft.Extensions.Logging;
+using System;
 
-        Console.WriteLine("Original Text: " + inputText);
-        Console.WriteLine("Masked Text: " + maskedText);
+public static class LoggerUtility
+{
+    private static readonly ILogger Logger;
+
+    static LoggerUtility()
+    {
+        // Set up your ILogger here, you might configure it in the application startup
+        Logger = new LoggerFactory().AddConsole().CreateLogger<LoggerUtility>();
+    }
+
+    public static void LogMessage(string message, LogLevel logLevel, Exception exception = null)
+    {
+        switch (logLevel)
+        {
+            case LogLevel.Trace:
+                Logger.LogTrace(exception, message);
+                break;
+            case LogLevel.Debug:
+                Logger.LogDebug(exception, message);
+                break;
+            case LogLevel.Information:
+                Logger.LogInformation(exception, message);
+                break;
+            case LogLevel.Warning:
+                Logger.LogWarning(exception, message);
+                break;
+            case LogLevel.Error:
+                Logger.LogError(exception, message);
+                break;
+            case LogLevel.Critical:
+                Logger.LogCritical(exception, message);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(logLevel), logLevel, null);
+        }
+    }
+
+    public static void LogException(Exception exception, string message = null)
+    {
+        LogMessage(message ?? "An exception occurred.", LogLevel.Error, exception);
+    }
+
+    // Add additional LogXxx methods as needed
+
+    public static void Main()
+    {
+        // Example usage
+        try
+        {
+            // Code that may throw an exception
+            throw new InvalidOperationException("An example exception.");
+        }
+        catch (Exception ex)
+        {
+            LogException(ex, "Custom error message");
+        }
+
+        LogMessage("Informational message", LogLevel.Information);
+        LogMessage("Debugging message", LogLevel.Debug);
+        LogMessage("Warning message", LogLevel.Warning);
+        LogMessage("Error message", LogLevel.Error);
+        LogMessage("Critical message", LogLevel.Critical);
     }
 }
