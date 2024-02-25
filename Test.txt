@@ -1,37 +1,43 @@
 using System;
 using System.Text.RegularExpressions;
+using System.Text;
 
 public class DataMasking
 {
+    private static readonly Regex CreditCardPattern = new Regex(@"\b(\d{4}-\d{4}-\d{4}-\d{4})\b");
+    private static readonly Regex SSNPattern = new Regex(@"\b(\d{3}-\d{2}-\d{4})\b");
+    private static readonly Regex DOBPattern = new Regex(@"\b(\d{2}/\d{2}/\d{4})\b");
+    private static readonly Regex BankAccountPattern = new Regex(@"\b(\d{4}-\d{4}-\d{4}-\d{4})\b");
+
     public static string PartialMasking(string input)
     {
         if (string.IsNullOrEmpty(input))
         {
-            // Handle invalid input
             return input;
         }
 
-        // Define regular expression patterns for credit card numbers, SSN, and DOB
-        string creditCardPattern = @"\b(\d{4}-\d{4}-\d{4}-\d{4})\b";
-        string ssnPattern = @"\b(\d{3}-\d{2}-\d{4})\b";
-        string dobPattern = @"\b(\d{2}/\d{2}/\d{4})\b";
-
         // Perform partial masking on credit card numbers
-        input = ApplyPartialMasking(input, creditCardPattern, 4);
+        input = ApplyPartialMasking(input, CreditCardPattern, 4);
 
         // Perform partial masking on SSN
-        input = ApplyPartialMasking(input, ssnPattern, 3);
+        input = ApplyPartialMasking(input, SSNPattern, 3);
 
         // Perform partial masking on DOB
-        input = ApplyPartialMasking(input, dobPattern, 2);
+        input = ApplyPartialMasking(input, DOBPattern, 2);
+
+        // Perform partial masking on bank account numbers
+        input = ApplyPartialMasking(input, BankAccountPattern, 4);
 
         return input;
     }
 
-    private static string ApplyPartialMasking(string input, string pattern, int visibleLength)
+    private static string ApplyPartialMasking(string input, Regex pattern, int visibleLength)
     {
         // Use regular expression to find matches
-        MatchCollection matches = Regex.Matches(input, pattern);
+        MatchCollection matches = pattern.Matches(input);
+
+        // Use StringBuilder for efficient string manipulation
+        StringBuilder maskedInput = new StringBuilder(input);
 
         // Iterate through matches and apply partial masking
         foreach (Match match in matches)
@@ -42,18 +48,18 @@ public class DataMasking
                 string visiblePart = match.Groups[1].Value.Substring(Math.Max(0, match.Groups[1].Value.Length - visibleLength));
                 string maskedValue = new string('*', match.Groups[1].Value.Length - visiblePart.Length) + visiblePart;
 
-                // Replace the sensitive information with the masked value
-                input = input.Replace(match.Groups[1].Value, maskedValue);
+                // Replace the sensitive information with the masked value using StringBuilder
+                maskedInput.Replace(match.Groups[1].Value, maskedValue, match.Index, match.Length);
             }
         }
 
-        return input;
+        return maskedInput.ToString();
     }
 
     public static void Main()
     {
         // Example usage
-        string inputText = "Credit Card: 1234-5678-9012-3456, SSN: 123-45-6789, DOB: 01/15/1980.";
+        string inputText = "Credit Card: 1234-5678-9012-3456, SSN: 123-45-6789, DOB: 01/15/1980, Bank Account: 9876-5432-1098-7654.";
 
         // Perform partial masking on various sensitive information
         string maskedText = PartialMasking(inputText);
