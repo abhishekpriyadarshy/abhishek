@@ -1,89 +1,48 @@
 using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
-public static class LoggerWrapper
+public class DataMasking
 {
-    private static readonly InternalLogger Logger = new InternalLogger();
-
-    // Other properties and fields...
-
-    public static Guid InstanceId => Logger.InstanceId;
-
-    public static string ApplicationName => Configuration["ApplicationName"] ?? HelperMethod.ExecutableName;
-
-    // Use the updated LoggerProperties class
-    public static LoggerProperties DefaultProperties { get; } = new LoggerProperties();
-
-    public static void LogInitialization(string logMessage, string? source = null, [CallerMemberName] string? methodName = null, LoggerProperties? properties = null)
+    public static string PartialMasking(string input, string pattern, int visibleLength)
     {
-        var mergedProperties = MergeProperties(properties);
-        Logger.LogEvent(new BaseEventBuilder
+        if (string.IsNullOrEmpty(input) || string.IsNullOrEmpty(pattern) || visibleLength <= 0)
         {
-            EventMessage = logMessage,
-            LoggingEventlevel = LoggingEventlevels.Initialization,
-            EventSource = source,
-            MethodName = methodName,
-            AdditionalProperties = mergedProperties.AllProperties
-        });
-    }
+            // Handle invalid input
+            return input;
+        }
 
-    public static void LogShutdown(string logMessage, string? source = null, [CallerMemberName] string? methodName = null, LoggerProperties? properties = null)
-    {
-        var mergedProperties = MergeProperties(properties);
-        Logger.LogEvent(new BaseEventBuilder
+        // Use regular expression to find matches
+        MatchCollection matches = Regex.Matches(input, pattern);
+
+        // Iterate through matches and apply partial masking
+        foreach (Match match in matches)
         {
-            EventMessage = logMessage,
-            LoggingEventlevel = LoggingEventlevels.Shutdown,
-            EventSource = source,
-            MethodName = methodName,
-            AdditionalProperties = mergedProperties.AllProperties
-        });
-    }
-
-    public static void LogException(Exception exception, string? source, [CallerMemberName] string? methodName = null, LoggerProperties? properties = null)
-    {
-        var mergedProperties = MergeProperties(properties);
-        Logger.LogException(exception, null, source, mergedProperties, methodName);
-    }
-
-    public static void LogInformation(string logMessage, string? source, [CallerMemberName] string? methodName = null, LoggerProperties? properties = null)
-    {
-        var mergedProperties = MergeProperties(properties);
-        Logger.LogInformation(logMessage, LoggingEventlevels.Informational, source, mergedProperties.AllProperties, methodName);
-    }
-
-    public static void LogDebug(string logMessage, string? source, [CallerMemberName] string? methodName = null, LoggerProperties? properties = null)
-    {
-        var mergedProperties = MergeProperties(properties);
-        Logger.LogDebug(logMessage, LoggingEventlevels.Debug, source, mergedProperties.AllProperties, methodName);
-    }
-
-    private static LoggerProperties MergeProperties(LoggerProperties? properties)
-    {
-        var mergedProperties = new LoggerProperties();
-
-        // Merge default properties
-        foreach (var defaultProperty in DefaultProperties.AllProperties)
-        {
-            if (!mergedProperties.AllProperties.ContainsKey(defaultProperty.Key))
+            if (match.Groups.Count > 1)
             {
-                mergedProperties.AddProperty(defaultProperty.Key, defaultProperty.Value);
+                // Keep only a portion of the sensitive information visible
+                string visiblePart = match.Groups[1].Value.Substring(Math.Max(0, match.Groups[1].Value.Length - visibleLength));
+                string maskedValue = new string('*', match.Groups[1].Value.Length - visiblePart.Length) + visiblePart;
+
+                // Replace the sensitive information with the masked value
+                input = input.Replace(match.Groups[1].Value, maskedValue);
             }
         }
 
-        // Merge consumer-added properties
-        if (properties != null)
-        {
-            foreach (var consumerProperty in properties.AllProperties)
-            {
-                if (!mergedProperties.AllProperties.ContainsKey(consumerProperty.Key))
-                {
-                    mergedProperties.AddProperty(consumerProperty.Key, consumerProperty.Value);
-                }
-            }
-        }
+        return input;
+    }
 
-        return mergedProperties;
+    public static void Main()
+    {
+        // Example usage
+        string inputText = "This is a sample credit card number: 1234-5678-9012-3456 and a birth year: 1980.";
+
+        // Define a regular expression pattern for credit card numbers
+        string creditCardPattern = @"\b(\d{4}-\d{4}-\d{4}-\d{4})\b";
+
+        // Perform partial masking on credit card numbers
+        string maskedText = PartialMasking(inputText, creditCardPattern, 4);
+
+        Console.WriteLine("Original Text: " + inputText);
+        Console.WriteLine("Masked Text: " + maskedText);
     }
 }
