@@ -3,14 +3,33 @@ using System.Text.RegularExpressions;
 
 public class DataMasking
 {
-    public static string PartialMasking(string input, string pattern, int visibleLength)
+    public static string PartialMasking(string input)
     {
-        if (string.IsNullOrEmpty(input) || string.IsNullOrEmpty(pattern) || visibleLength <= 0)
+        if (string.IsNullOrEmpty(input))
         {
             // Handle invalid input
             return input;
         }
 
+        // Define regular expression patterns for credit card numbers, SSN, and DOB
+        string creditCardPattern = @"\b(\d{4}-\d{4}-\d{4}-\d{4})\b";
+        string ssnPattern = @"\b(\d{3}-\d{2}-\d{4})\b";
+        string dobPattern = @"\b(\d{2}/\d{2}/\d{4})\b";
+
+        // Perform partial masking on credit card numbers
+        input = ApplyPartialMasking(input, creditCardPattern, 4);
+
+        // Perform partial masking on SSN
+        input = ApplyPartialMasking(input, ssnPattern, 3);
+
+        // Perform partial masking on DOB
+        input = ApplyPartialMasking(input, dobPattern, 2);
+
+        return input;
+    }
+
+    private static string ApplyPartialMasking(string input, string pattern, int visibleLength)
+    {
         // Use regular expression to find matches
         MatchCollection matches = Regex.Matches(input, pattern);
 
@@ -34,13 +53,10 @@ public class DataMasking
     public static void Main()
     {
         // Example usage
-        string inputText = "This is a sample credit card number: 1234-5678-9012-3456 and a birth year: 1980.";
+        string inputText = "Credit Card: 1234-5678-9012-3456, SSN: 123-45-6789, DOB: 01/15/1980.";
 
-        // Define a regular expression pattern for credit card numbers
-        string creditCardPattern = @"\b(\d{4}-\d{4}-\d{4}-\d{4})\b";
-
-        // Perform partial masking on credit card numbers
-        string maskedText = PartialMasking(inputText, creditCardPattern, 4);
+        // Perform partial masking on various sensitive information
+        string maskedText = PartialMasking(inputText);
 
         Console.WriteLine("Original Text: " + inputText);
         Console.WriteLine("Masked Text: " + maskedText);
