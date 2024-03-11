@@ -1,134 +1,41 @@
-using Microsoft.Extensions.Logging;
-using System;
+// YourModel.cs
 
-public static class LoggerUtility
+using System.ComponentModel.DataAnnotations;
+
+namespace DataAnnotationsExampleLib
 {
-    private static readonly ILogger Logger;
-
-    static LoggerUtility()
+    public class YourModel
     {
-        // Set up your ILogger here, you might configure it in the application startup
-        Logger = new LoggerFactory().AddConsole().CreateLogger<LoggerUtility>();
-    }
-
-    public static void LogMessage(string message, LogLevel logLevel, Exception exception = null)
-    {
-        switch (logLevel)
-        {
-            case LogLevel.Trace:
-                Logger.LogTrace(exception, message);
-                break;
-            case LogLevel.Debug:
-                Logger.LogDebug(exception, message);
-                break;
-            case LogLevel.Information:
-                Logger.LogInformation(exception, message);
-                break;
-            case LogLevel.Warning:
-                Logger.LogWarning(exception, message);
-                break;
-            case LogLevel.Error:
-                Logger.LogError(exception, message);
-                break;
-            case LogLevel.Critical:
-                Logger.LogCritical(exception, message);
-                break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(logLevel), logLevel, null);
-        }
-    }
-
-    public static void LogException(Exception exception, string message = null)
-    {
-        LogMessage(message ?? "An exception occurred.", LogLevel.Error, exception);
-    }
-
-    // Add additional LogXxx methods as needed
-
-    public static void Main()
-    {
-        // Example usage
-        try
-        {
-            // Code that may throw an exception
-            throw new InvalidOperationException("An example exception.");
-        }
-        catch (Exception ex)
-        {
-            LogException(ex, "Custom error message");
-        }
-
-        LogMessage("Informational message", LogLevel.Information);
-        LogMessage("Debugging message", LogLevel.Debug);
-        LogMessage("Warning message", LogLevel.Warning);
-        LogMessage("Error message", LogLevel.Error);
-        LogMessage("Critical message", LogLevel.Critical);
+        [Required(ErrorMessage = "Name is required.")]
+        public string Name { get; set; }
     }
 }
-using Microsoft.Extensions.Logging;
-using System;
 
-public static class LoggerUtility
-{
-    private static readonly ILogger Logger;
 
-    static LoggerUtility()
-    {
-        // Set up your ILogger here, you might configure it in the application startup
-        Logger = new LoggerFactory().AddConsole().CreateLogger<LoggerUtility>();
-    }
-
-    public static void LogMessage(string message, LogLevel logLevel, Exception exception = null)
-    {
-        switch (logLevel)
+---------------------------
+static void Main()
         {
-            case LogLevel.Trace:
-                Logger.LogTrace(exception, message);
-                break;
-            case LogLevel.Debug:
-                Logger.LogDebug(exception, message);
-                break;
-            case LogLevel.Information:
-                Logger.LogInformation(exception, message);
-                break;
-            case LogLevel.Warning:
-                Logger.LogWarning(exception, message);
-                break;
-            case LogLevel.Error:
-                Logger.LogError(exception, message);
-                break;
-            case LogLevel.Critical:
-                Logger.LogCritical(exception, message);
-                break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(logLevel), logLevel, null);
+            // Create an instance of YourModel
+            var yourModel = new DataAnnotationsExampleLib.YourModel();
+
+            // Uncommenting the next line would result in an exception or a validation error
+            // yourModel.Name = null;
+
+            // To catch validation errors, you can check the validation state using ValidationContext
+            var validationContext = new ValidationContext(yourModel);
+            var validationResults = new System.Collections.Generic.List<ValidationResult>();
+
+            bool isValid = Validator.TryValidateObject(yourModel, validationContext, validationResults, true);
+
+            if (!isValid)
+            {
+                foreach (var validationResult in validationResults)
+                {
+                    Console.WriteLine(validationResult.ErrorMessage);
+                }
+            }
+            else
+            {
+                Console.WriteLine("Validation passed. Proceed with further logic.");
+            }
         }
-    }
-
-    public static void LogException(Exception exception, string message = null)
-    {
-        LogMessage(message ?? "An exception occurred.", LogLevel.Error, exception);
-    }
-
-    // Add additional LogXxx methods as needed
-
-    public static void Main()
-    {
-        // Example usage
-        try
-        {
-            // Code that may throw an exception
-            throw new InvalidOperationException("An example exception.");
-        }
-        catch (Exception ex)
-        {
-            LogException(ex, "Custom error message");
-        }
-
-        LogMessage("Informational message", LogLevel.Information);
-        LogMessage("Debugging message", LogLevel.Debug);
-        LogMessage("Warning message", LogLevel.Warning);
-        LogMessage("Error message", LogLevel.Error);
-        LogMessage("Critical message", LogLevel.Critical);
-    }
-}
