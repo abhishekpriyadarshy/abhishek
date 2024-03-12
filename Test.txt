@@ -99,3 +99,46 @@ class Program
 ```
 
 This setup allows you to encapsulate the logging details within the logging wrapper library, reducing the dependency on consumers to pass all the logging details explicitly. The interceptor sets the values in the `LogContext` before each method call, and the logging method is invoked after the method call completes. Adjust the implementation according to your specific logging requirements and how you want to handle the logging context.
+-----------------------------------------------------------------------------------------
+public class LoggingInterceptor<T> : DispatchProxy
+{
+    private T _target;
+    private readonly LogContext _logContext = new LogContext(); // Initialize log context here
+
+    public static T Create(T target)
+    {
+        object proxy = Create<T, LoggingInterceptor<T>>();
+        ((LoggingInterceptor<T>)proxy)._target = target;
+        return (T)proxy;
+    }
+
+    public void SetLogMessage(string logMessage)
+    {
+        _logContext.LogMessage = logMessage;
+    }
+
+    protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
+    {
+        try
+        {
+            // Set values in log context as needed before method invocation
+            _logContext.StartTime = DateTime.UtcNow;
+            // Set other properties as needed
+
+            // Invoke the original method
+            return targetMethod!.Invoke(_target, args);
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions
+            _logContext.ErrorMessage = ex.Message;
+            _logContext.ErrorType = ex.GetType().FullName;
+            throw;
+        }
+        finally
+        {
+            // Log using the static Logger.LogInformation method after method execution
+            Logger.LogInformation(_logContext.LogMessage, _logContext, targetMethod!.DeclaringType!.FullName, targetMethod.Name);
+        }
+    }
+}
