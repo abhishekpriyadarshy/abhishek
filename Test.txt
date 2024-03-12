@@ -1,41 +1,101 @@
-// YourModel.cs
+To address your requirement, you can utilize the `DispatchProxy` along with a custom interceptor that sets values in the `LogContext` class. Here's how you can do it:
 
-using System.ComponentModel.DataAnnotations;
+1. **Define LogContext Class:**
 
-namespace DataAnnotationsExampleLib
+```csharp
+public class LogContext
 {
-    public class YourModel
+    public string AppId { get; set; }
+    public DateTime StartTime { get; set; }
+    public TimeSpan Duration { get; set; }
+    public string ErrorMessage { get; set; }
+    public string ErrorType { get; set; }
+    // Add other properties as needed
+}
+```
+
+2. **Create Logger Class:**
+
+```csharp
+public class Logger
+{
+    public void LogInformation(string logMessage, string source, string method)
     {
-        [Required(ErrorMessage = "Name is required.")]
-        public string Name { get; set; }
+        LogContext logContext = new LogContext();
+        // Populate log context with necessary data
+        logContext.StartTime = DateTime.UtcNow;
+        // Set other properties as needed
+
+        Log(logMessage, logContext, source, method);
+    }
+
+    private void Log(string logMessage, LogContext logContext, string source, string method)
+    {
+        // Implement your logging logic here using the provided logMessage, logContext, source, and method
+        Console.WriteLine($"[{source}.{method}] {logMessage}");
+        Console.WriteLine($"Start Time: {logContext.StartTime}");
+        // Log other properties from logContext
     }
 }
+```
 
+3. **Implement DispatchProxy Interceptor:**
 
----------------------------
-static void Main()
+```csharp
+public class LoggingInterceptor<T> : DispatchProxy
+{
+    private T _target;
+    private LogContext _logContext;
+
+    public static T Create(T target, LogContext logContext)
+    {
+        object proxy = Create<T, LoggingInterceptor<T>>();
+        ((LoggingInterceptor<T>)proxy)._target = target;
+        ((LoggingInterceptor<T>)proxy)._logContext = logContext;
+        return (T)proxy;
+    }
+
+    protected override object Invoke(MethodInfo targetMethod, object[] args)
+    {
+        try
         {
-            // Create an instance of YourModel
-            var yourModel = new DataAnnotationsExampleLib.YourModel();
+            // Set values in log context as needed
+            _logContext.StartTime = DateTime.UtcNow;
+            // Set other properties as needed
 
-            // Uncommenting the next line would result in an exception or a validation error
-            // yourModel.Name = null;
-
-            // To catch validation errors, you can check the validation state using ValidationContext
-            var validationContext = new ValidationContext(yourModel);
-            var validationResults = new System.Collections.Generic.List<ValidationResult>();
-
-            bool isValid = Validator.TryValidateObject(yourModel, validationContext, validationResults, true);
-
-            if (!isValid)
-            {
-                foreach (var validationResult in validationResults)
-                {
-                    Console.WriteLine(validationResult.ErrorMessage);
-                }
-            }
-            else
-            {
-                Console.WriteLine("Validation passed. Proceed with further logic.");
-            }
+            return targetMethod.Invoke(_target, args);
         }
+        finally
+        {
+            // Log using the Logger class
+            Logger logger = new Logger();
+            logger.LogInformation("Method executed successfully.", targetMethod.DeclaringType.FullName, targetMethod.Name);
+        }
+    }
+}
+```
+
+4. **Usage Example:**
+
+```csharp
+class Program
+{
+    static void Main(string[] args)
+    {
+        // Instantiate your target class (e.g., Service)
+        IService service = new Service();
+
+        // Create a LogContext instance
+        LogContext logContext = new LogContext();
+
+        // Create a proxy instance using DispatchProxy and LoggingInterceptor
+        IService proxyService = LoggingInterceptor<IService>.Create(service, logContext);
+
+        // Call methods on the proxy
+        proxyService.Method1();
+        proxyService.Method2();
+    }
+}
+```
+
+This setup allows you to encapsulate the logging details within the logging wrapper library, reducing the dependency on consumers to pass all the logging details explicitly. The interceptor sets the values in the `LogContext` before each method call, and the logging method is invoked after the method call completes. Adjust the implementation according to your specific logging requirements and how you want to handle the logging context.
