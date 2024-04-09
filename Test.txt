@@ -69,3 +69,16 @@ class Program
         proxiedService.DoSomething("test");
     }
 }
+--------------------------------------------------------------------------
+protected override void Load(ContainerBuilder builder)
+    {
+        builder.RegisterType<LoggingInterceptor>();
+        builder.Register(c =>
+        {
+            var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddConsole();
+            });
+            return loggerFactory.CreateLogger<LoggingInterceptor>();
+        }).As<ILogger<LoggingInterceptor>>();
+    }
