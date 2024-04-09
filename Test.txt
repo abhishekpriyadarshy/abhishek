@@ -82,3 +82,20 @@ protected override void Load(ContainerBuilder builder)
             return loggerFactory.CreateLogger<LoggingInterceptor>();
         }).As<ILogger<LoggingInterceptor>>();
     }
+-----------------------------------------------------------------------------------------
+// Setup DI container with Autofac
+        var builder = new ContainerBuilder();
+
+        // Register logging
+        builder.RegisterModule(new LoggingModule());
+
+        // Register all services with interception
+        builder.RegisterAssemblyTypes(Assembly.GetExecutingAssembly())
+               .Where(t => t.GetInterfaces().Any())
+               .EnableInterfaceInterceptors()
+               .InterceptedBy(typeof(LoggingInterceptor));
+
+        var container = builder.Build();
+
+        // Resolve the service from the container
+        var service = container.Resolve<IMyService>();
