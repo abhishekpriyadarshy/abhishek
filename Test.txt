@@ -1,144 +1,71 @@
-To address your requirement, you can utilize the `DispatchProxy` along with a custom interceptor that sets values in the `LogContext` class. Here's how you can do it:
+using Castle.DynamicProxy;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Diagnostics;
+using System.Reflection;
 
-1. **Define LogContext Class:**
-
-```csharp
-public class LogContext
+public class LoggingInterceptor : IInterceptor
 {
-    public string AppId { get; set; }
-    public DateTime StartTime { get; set; }
-    public TimeSpan Duration { get; set; }
-    public string ErrorMessage { get; set; }
-    public string ErrorType { get; set; }
-    // Add other properties as needed
-}
-```
+    private readonly ILogger _logger;
 
-2. **Create Logger Class:**
-
-```csharp
-public class Logger
-{
-    public void LogInformation(string logMessage, string source, string method)
+    public LoggingInterceptor(ILogger<LoggingInterceptor> logger)
     {
-        LogContext logContext = new LogContext();
-        // Populate log context with necessary data
-        logContext.StartTime = DateTime.UtcNow;
-        // Set other properties as needed
-
-        Log(logMessage, logContext, source, method);
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    private void Log(string logMessage, LogContext logContext, string source, string method)
+    public void Intercept(IInvocation invocation)
     {
-        // Implement your logging logic here using the provided logMessage, logContext, source, and method
-        Console.WriteLine($"[{source}.{method}] {logMessage}");
-        Console.WriteLine($"Start Time: {logContext.StartTime}");
-        // Log other properties from logContext
-    }
-}
-```
+        var methodInfo = invocation.MethodInvocationTarget ?? invocation.Method;
+        var methodName = methodInfo.Name;
+        var className = methodInfo.DeclaringType.Name;
+        var parameters = string.Join(", ", invocation.Arguments.Select(arg => (arg ?? "").ToString()));
 
-3. **Implement DispatchProxy Interceptor:**
+        _logger.LogInformation($"Method {methodName} in class {className} is executing with parameters: {parameters}");
 
-```csharp
-public class LoggingInterceptor<T> : DispatchProxy
-{
-    private T _target;
-    private LogContext _logContext;
+        var stopwatch = Stopwatch.StartNew();
 
-    public static T Create(T target, LogContext logContext)
-    {
-        object proxy = Create<T, LoggingInterceptor<T>>();
-        ((LoggingInterceptor<T>)proxy)._target = target;
-        ((LoggingInterceptor<T>)proxy)._logContext = logContext;
-        return (T)proxy;
-    }
-
-    protected override object Invoke(MethodInfo targetMethod, object[] args)
-    {
         try
         {
-            // Set values in log context as needed
-            _logContext.StartTime = DateTime.UtcNow;
-            // Set other properties as needed
-
-            return targetMethod.Invoke(_target, args);
+            invocation.Proceed(); // Proceed with the original method invocation
         }
         finally
         {
-            // Log using the Logger class
-            Logger logger = new Logger();
-            logger.LogInformation("Method executed successfully.", targetMethod.DeclaringType.FullName, targetMethod.Name);
+            stopwatch.Stop();
+            var duration = stopwatch.ElapsedMilliseconds;
+
+            _logger.LogInformation($"Method {methodName} execution completed in {duration} ms");
         }
     }
 }
-```
 
-4. **Usage Example:**
-
-```csharp
+--------------------------------------------------------------------------------------------------------------------------------
+public static class LoggingProxyFactory
+{
+    public static T CreateProxy<T>(T target, ILogger<LoggingInterceptor> logger) where T : class
+    {
+        var generator = new ProxyGenerator();
+        var interceptor = new LoggingInterceptor(logger);
+        return generator.CreateInterfaceProxyWithTarget(target, interceptor);
+    }
+}
+-------------------------------------------------------------------------------------------------------------------------------------
 class Program
 {
     static void Main(string[] args)
     {
-        // Instantiate your target class (e.g., Service)
-        IService service = new Service();
+        // Setup logging
+        var serviceProvider = new ServiceCollection()
+            .AddLogging(builder => builder.AddConsole())
+            .BuildServiceProvider();
+        var logger = serviceProvider.GetRequiredService<ILogger<LoggingInterceptor>>();
 
-        // Create a LogContext instance
-        LogContext logContext = new LogContext();
+        // Create the original service instance
+        IMyService originalService = new MyService();
 
-        // Create a proxy instance using DispatchProxy and LoggingInterceptor
-        IService proxyService = LoggingInterceptor<IService>.Create(service, logContext);
+        // Create a proxy for the service with logging interception
+        IMyService proxiedService = LoggingProxyFactory.CreateProxy(originalService, logger);
 
-        // Call methods on the proxy
-        proxyService.Method1();
-        proxyService.Method2();
-    }
-}
-```
-
-This setup allows you to encapsulate the logging details within the logging wrapper library, reducing the dependency on consumers to pass all the logging details explicitly. The interceptor sets the values in the `LogContext` before each method call, and the logging method is invoked after the method call completes. Adjust the implementation according to your specific logging requirements and how you want to handle the logging context.
------------------------------------------------------------------------------------------
-public class LoggingInterceptor<T> : DispatchProxy
-{
-    private T _target;
-    private readonly LogContext _logContext = new LogContext(); // Initialize log context here
-
-    public static T Create(T target)
-    {
-        object proxy = Create<T, LoggingInterceptor<T>>();
-        ((LoggingInterceptor<T>)proxy)._target = target;
-        return (T)proxy;
-    }
-
-    public void SetLogMessage(string logMessage)
-    {
-        _logContext.LogMessage = logMessage;
-    }
-
-    protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
-    {
-        try
-        {
-            // Set values in log context as needed before method invocation
-            _logContext.StartTime = DateTime.UtcNow;
-            // Set other properties as needed
-
-            // Invoke the original method
-            return targetMethod!.Invoke(_target, args);
-        }
-        catch (Exception ex)
-        {
-            // Handle exceptions
-            _logContext.ErrorMessage = ex.Message;
-            _logContext.ErrorType = ex.GetType().FullName;
-            throw;
-        }
-        finally
-        {
-            // Log using the static Logger.LogInformation method after method execution
-            Logger.LogInformation(_logContext.LogMessage, _logContext, targetMethod!.DeclaringType!.FullName, targetMethod.Name);
-        }
+        // Invoke methods on the proxied service
+        proxiedService.DoSomething("test");
     }
 }
