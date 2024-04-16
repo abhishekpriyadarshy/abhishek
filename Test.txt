@@ -1,3 +1,10 @@
+
+Based on our discussions regarding the service, we have successfully developed it using .NET Core. This new service represents a modern enhancement of our legacy system.
+
+Currently, we are utilizing APG harness on PCF for deployment, with deployments already in place in Devon and other lower environments. However, the AB team is facing limitations in accessing and testing the service within these environments.
+
+To address this issue, I kindly request that the following access be granted: [Specify the required access]. Once access is provided, it will enable us to obtain the necessary secret and key for consumer usage. This, in turn, will facilitate our testing activities in non-production environments.
+
 using Castle.DynamicProxy;
 using Microsoft.Extensions.Logging;
 using System;
