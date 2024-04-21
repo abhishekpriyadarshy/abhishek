@@ -1,25 +1,20 @@
-public class LoggingDecorator
+public class LoggingAspect
 {
-    public static void LogMethodInvocation(Action action, LogContext logContext)
+    public static void LogMethodInvocation(string methodName, LogContext logContext)
     {
-        // Log method invocation before executing the action
-        LoggingAspect.LogMethodInvocation(action.Method.Name, logContext);
-        action();
+        // Log method invocation
+        Log.Information($"Method {methodName} called.", logContext);
     }
 
-    public static void LogMethodCompletion(Action action, LogContext logContext)
+    public static void LogMethodCompletion(string methodName, LogContext logContext)
     {
-        try
-        {
-            action();
-            // Log method completion after executing the action
-            LoggingAspect.LogMethodCompletion(action.Method.Name, logContext);
-        }
-        catch (Exception ex)
-        {
-            // Log exception if an error occurs
-            LoggingAspect.LogException(action.Method.Name, logContext, ex);
-            throw;
-        }
+        // Log method completion
+        Log.Information($"Method {methodName} completed successfully.", logContext);
+    }
+
+    public static void LogException(string methodName, LogContext logContext, Exception ex)
+    {
+        // Log exception
+        Log.Error(ex, $"An error occurred in method {methodName}.", logContext);
     }
 }
