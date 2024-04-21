@@ -1,20 +1,16 @@
-public class LoggingAspect
-{
-    public static void LogMethodInvocation(string methodName, LogContext logContext)
+private readonly ProxyGenerator _generator;
+    private readonly LoggingInterceptor _loggingInterceptor;
+
+    public LoggingServiceFactory()
     {
-        // Log method invocation
-        Log.Information($"Method {methodName} called.", logContext);
+        _generator = new ProxyGenerator();
+        _loggingInterceptor = new LoggingInterceptor();
     }
 
-    public static void LogMethodCompletion(string methodName, LogContext logContext)
+    public ILoggingService CreateLoggingService()
     {
-        // Log method completion
-        Log.Information($"Method {methodName} completed successfully.", logContext);
+        var loggingService = _generator.CreateInterfaceProxyWithTarget<ILoggingService>(
+            new LoggingService(), _loggingInterceptor);
+        
+        return loggingService;
     }
-
-    public static void LogException(string methodName, LogContext logContext, Exception ex)
-    {
-        // Log exception
-        Log.Error(ex, $"An error occurred in method {methodName}.", logContext);
-    }
-}
