@@ -1,16 +1,25 @@
-private readonly ProxyGenerator _generator;
-    private readonly LoggingInterceptor _loggingInterceptor;
+import pandas as pd
 
-    public LoggingServiceFactory()
-    {
-        _generator = new ProxyGenerator();
-        _loggingInterceptor = new LoggingInterceptor();
-    }
+# Load the Excel files into DataFrames
+file1 = 'dataV4.xlsx'
+file2 = 'dataV5.xlsx'
 
-    public ILoggingService CreateLoggingService()
-    {
-        var loggingService = _generator.CreateInterfaceProxyWithTarget<ILoggingService>(
-            new LoggingService(), _loggingInterceptor);
-        
-        return loggingService;
-    }
+df1 = pd.read_excel(file1)
+df2 = pd.read_excel(file2)
+
+# Reindex the DataFrames to ensure they have the same structure
+common_columns = df1.columns.union(df2.columns)
+df1 = df1.reindex(columns=common_columns)
+df2 = df2.reindex(columns=common_columns)
+
+# Sort the DataFrames by a specific column if necessary
+# df1.sort_values(by='some_column', inplace=True)
+# df2.sort_values(by='some_column', inplace=True)
+
+# Compare the DataFrames
+comparison_result = df1.compare(df2)
+
+# Write the differences to a new Excel file
+comparison_result.to_excel('comparison_result.xlsx', index=True)
+
+print("Comparison complete. Differences are written to 'comparison_result.xlsx'.")
