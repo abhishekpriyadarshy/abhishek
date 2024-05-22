@@ -1,25 +1,41 @@
 import pandas as pd
 
-# Load the Excel files into DataFrames
+def compare_sheets(file1, file2):
+    # Load the Excel files
+    excel1 = pd.ExcelFile(file1)
+    excel2 = pd.ExcelFile(file2)
+
+    # Get the list of sheet names
+    sheets1 = set(excel1.sheet_names)
+    sheets2 = set(excel2.sheet_names)
+
+    # Get common sheets
+    common_sheets = sheets1.intersection(sheets2)
+
+    if not common_sheets:
+        raise ValueError("No common sheets found in the two Excel files.")
+
+    # Compare each common sheet
+    for sheet in common_sheets:
+        df1 = pd.read_excel(file1, sheet_name=sheet)
+        df2 = pd.read_excel(file2, sheet_name=sheet)
+
+        # Reindex to ensure they have the same columns
+        common_columns = df1.columns.union(df2.columns)
+        df1 = df1.reindex(columns=common_columns)
+        df2 = df2.reindex(columns=common_columns)
+
+        # Compare the DataFrames
+        comparison_result = df1.compare(df2)
+
+        # Write the differences to a new Excel file (one per sheet)
+        output_file = f'comparison_result_{sheet}.xlsx'
+        comparison_result.to_excel(output_file, index=True)
+        print(f"Comparison complete for sheet '{sheet}'. Differences are written to '{output_file}'.")
+
+# Specify your file paths
 file1 = 'dataV4.xlsx'
 file2 = 'dataV5.xlsx'
 
-df1 = pd.read_excel(file1)
-df2 = pd.read_excel(file2)
-
-# Reindex the DataFrames to ensure they have the same structure
-common_columns = df1.columns.union(df2.columns)
-df1 = df1.reindex(columns=common_columns)
-df2 = df2.reindex(columns=common_columns)
-
-# Sort the DataFrames by a specific column if necessary
-# df1.sort_values(by='some_column', inplace=True)
-# df2.sort_values(by='some_column', inplace=True)
-
-# Compare the DataFrames
-comparison_result = df1.compare(df2)
-
-# Write the differences to a new Excel file
-comparison_result.to_excel('comparison_result.xlsx', index=True)
-
-print("Comparison complete. Differences are written to 'comparison_result.xlsx'.")
+# Run the comparison
+compare_sheets(file1, file2)
