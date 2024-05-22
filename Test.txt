@@ -1,9 +1,25 @@
 import pandas as pd
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+def load_excel(file):
+    try:
+        excel = pd.ExcelFile(file)
+        logging.info(f"Loaded file {file} successfully.")
+        return excel
+    except Exception as e:
+        logging.error(f"Error loading Excel file {file}: {e}")
+        return None
 
 def compare_sheets(file1, file2):
-    # Load the Excel files
-    excel1 = pd.ExcelFile(file1)
-    excel2 = pd.ExcelFile(file2)
+    excel1 = load_excel(file1)
+    excel2 = load_excel(file2)
+
+    if not excel1 or not excel2:
+        logging.error("Failed to load one or both of the Excel files. Exiting.")
+        return
 
     # Get the list of sheet names
     sheets1 = set(excel1.sheet_names)
@@ -13,25 +29,49 @@ def compare_sheets(file1, file2):
     common_sheets = sheets1.intersection(sheets2)
 
     if not common_sheets:
-        raise ValueError("No common sheets found in the two Excel files.")
+        logging.error("No common sheets found in the two Excel files.")
+        return
 
-    # Compare each common sheet
     for sheet in common_sheets:
-        df1 = pd.read_excel(file1, sheet_name=sheet)
-        df2 = pd.read_excel(file2, sheet_name=sheet)
+        try:
+            logging.info(f"Processing sheet: {sheet}")
+            df1 = pd.read_excel(file1, sheet_name=sheet)
+            df2 = pd.read_excel(file2, sheet_name=sheet)
 
-        # Reindex to ensure they have the same columns
-        common_columns = df1.columns.union(df2.columns)
-        df1 = df1.reindex(columns=common_columns)
-        df2 = df2.reindex(columns=common_columns)
+            logging.info(f"Shape of df1 for sheet '{sheet}': {df1.shape}")
+            logging.info(f"Shape of df2 for sheet '{sheet}': {df2.shape}")
 
-        # Compare the DataFrames
-        comparison_result = df1.compare(df2)
+            # Align columns
+            common_columns = df1.columns.union(df2.columns)
+            df1 = df1.reindex(columns=common_columns)
+            df2 = df2.reindex(columns=common_columns)
 
-        # Write the differences to a new Excel file (one per sheet)
-        output_file = f'comparison_result_{sheet}.xlsx'
-        comparison_result.to_excel(output_file, index=True)
-        print(f"Comparison complete for sheet '{sheet}'. Differences are written to '{output_file}'.")
+            logging.info(f"Reindexed columns for sheet '{sheet}': {list(common_columns)}")
+
+            # Align indices
+            common_index = df1.index.union(df2.index)
+            df1 = df1.reindex(index=common_index)
+            df2 = df2.reindex(index=common_index)
+
+            logging.info(f"Reindexed index for sheet '{sheet}': {list(common_index)}")
+
+            # Compare the DataFrames
+            comparison_result = df1.compare(df2)
+
+            logging.info(f"Shape of comparison result for sheet '{sheet}': {comparison_result.shape}")
+
+            if not comparison_result.empty:
+                # Write the differences to a new Excel file (one per sheet)
+                output_file = f'comparison_result_{sheet}.xlsx'
+                comparison_result.to_excel(output_file, index=True)
+                logging.info(f"Comparison complete for sheet '{sheet}'. Differences are written to '{output_file}'.")
+            else:
+                logging.info(f"No differences found for sheet '{sheet}'.")
+
+        except ValueError as e:
+            logging.error(f"ValueError encountered while processing sheet '{sheet}': {e}")
+        except Exception as e:
+            logging.error(f"Unexpected error encountered while processing sheet '{sheet}': {e}")
 
 # Specify your file paths
 file1 = 'dataV4.xlsx'
