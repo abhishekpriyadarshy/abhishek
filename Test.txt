@@ -1,81 +1,44 @@
-import pandas as pd
-import logging
+import requests
+from requests.auth import HTTPBasicAuth
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Replace with your GitHub username and personal access token
+GITHUB_USERNAME = 'your_github_username'
+GITHUB_TOKEN = 'your_personal_access_token'
 
-def load_excel(file):
-    try:
-        excel = pd.ExcelFile(file)
-        logging.info(f"Loaded file {file} successfully.")
-        return excel
-    except Exception as e:
-        logging.error(f"Error loading Excel file {file}: {e}")
-        return None
+# GitHub API URL to get user repositories
+REPOS_URL = f'https://api.github.com/users/{GITHUB_USERNAME}/repos'
 
-def compare_sheets(file1, file2):
-    excel1 = load_excel(file1)
-    excel2 = load_excel(file2)
+def get_repos(url, username, token):
+    repos = []
+    while url:
+        response = requests.get(url, auth=HTTPBasicAuth(username, token))
+        response.raise_for_status()
+        repos.extend(response.json())
+        url = response.links.get('next', {}).get('url')
+    return repos
 
-    if not excel1 or not excel2:
-        logging.error("Failed to load one or both of the Excel files. Exiting.")
-        return
+def get_commit_count(repo_full_name, username, token):
+    commits_url = f'https://api.github.com/repos/{repo_full_name}/commits'
+    params = {'author': username}
+    total_commits = 0
+    while commits_url:
+        response = requests.get(commits_url, auth=HTTPBasicAuth(username, token), params=params)
+        response.raise_for_status()
+        commits = response.json()
+        total_commits += len(commits)
+        commits_url = response.links.get('next', {}).get('url')
+    return total_commits
 
-    # Get the list of sheet names
-    sheets1 = set(excel1.sheet_names)
-    sheets2 = set(excel2.sheet_names)
+def main():
+    repos = get_repos(REPOS_URL, GITHUB_USERNAME, GITHUB_TOKEN)
+    total_commits = 0
+    for repo in repos:
+        repo_full_name = repo['full_name']
+        print(f'Fetching commits for repository: {repo_full_name}')
+        repo_commit_count = get_commit_count(repo_full_name, GITHUB_USERNAME, GITHUB_TOKEN)
+        total_commits += repo_commit_count
+        print(f'{repo_full_name}: {repo_commit_count} commits')
+    print(f'Total commits across all repositories: {total_commits}')
 
-    # Get common sheets
-    common_sheets = sheets1.intersection(sheets2)
-
-    if not common_sheets:
-        logging.error("No common sheets found in the two Excel files.")
-        return
-
-    for sheet in common_sheets:
-        try:
-            logging.info(f"Processing sheet: {sheet}")
-            df1 = pd.read_excel(file1, sheet_name=sheet)
-            df2 = pd.read_excel(file2, sheet_name=sheet)
-
-            logging.info(f"Shape of df1 for sheet '{sheet}': {df1.shape}")
-            logging.info(f"Shape of df2 for sheet '{sheet}': {df2.shape}")
-
-            # Align columns
-            common_columns = df1.columns.union(df2.columns)
-            df1 = df1.reindex(columns=common_columns)
-            df2 = df2.reindex(columns=common_columns)
-
-            logging.info(f"Reindexed columns for sheet '{sheet}': {list(common_columns)}")
-
-            # Align indices
-            common_index = df1.index.union(df2.index)
-            df1 = df1.reindex(index=common_index)
-            df2 = df2.reindex(index=common_index)
-
-            logging.info(f"Reindexed index for sheet '{sheet}': {list(common_index)}")
-
-            # Compare the DataFrames
-            comparison_result = df1.compare(df2)
-
-            logging.info(f"Shape of comparison result for sheet '{sheet}': {comparison_result.shape}")
-
-            if not comparison_result.empty:
-                # Write the differences to a new Excel file (one per sheet)
-                output_file = f'comparison_result_{sheet}.xlsx'
-                comparison_result.to_excel(output_file, index=True)
-                logging.info(f"Comparison complete for sheet '{sheet}'. Differences are written to '{output_file}'.")
-            else:
-                logging.info(f"No differences found for sheet '{sheet}'.")
-
-        except ValueError as e:
-            logging.error(f"ValueError encountered while processing sheet '{sheet}': {e}")
-        except Exception as e:
-            logging.error(f"Unexpected error encountered while processing sheet '{sheet}': {e}")
-
-# Specify your file paths
-file1 = 'dataV4.xlsx'
-file2 = 'dataV5.xlsx'
-
-# Run the comparison
-compare_sheets(file1, file2)
+if __name__ == '__main__':
+    main()
