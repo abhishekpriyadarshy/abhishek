@@ -1,44 +1,62 @@
-import requests
-from requests.auth import HTTPBasicAuth
+import cx_Oracle
+import pandas as pd
 
-# Replace with your GitHub username and personal access token
-GITHUB_USERNAME = 'your_github_username'
-GITHUB_TOKEN = 'your_personal_access_token'
+# Database connection details
+db1_config = {
+    'user': 'user1',
+    'password': 'password1',
+    'dsn': 'dsn1'
+}
 
-# GitHub API URL to get user repositories
-REPOS_URL = f'https://api.github.com/users/{GITHUB_USERNAME}/repos'
+db2_config = {
+    'user': 'user2',
+    'password': 'password2',
+    'dsn': 'dsn2'
+}
 
-def get_repos(url, username, token):
-    repos = []
-    while url:
-        response = requests.get(url, auth=HTTPBasicAuth(username, token))
-        response.raise_for_status()
-        repos.extend(response.json())
-        url = response.links.get('next', {}).get('url')
-    return repos
+def fetch_table_data(config, table_name):
+    try:
+        # Establish the database connection
+        conn = cx_Oracle.connect(
+            user=config['user'],
+            password=config['password'],
+            dsn=config['dsn']
+        )
+        # SQL query to fetch all data from the table
+        query = f"SELECT * FROM {table_name}"
+        # Use pandas to read SQL query into a DataFrame
+        df = pd.read_sql(query, conn)
+        # Close the connection
+        conn.close()
+        return df
+    except cx_Oracle.DatabaseError as e:
+        print(f"Database error: {e}")
+        return None
 
-def get_commit_count(repo_full_name, username, token):
-    commits_url = f'https://api.github.com/repos/{repo_full_name}/commits'
-    params = {'author': username}
-    total_commits = 0
-    while commits_url:
-        response = requests.get(commits_url, auth=HTTPBasicAuth(username, token), params=params)
-        response.raise_for_status()
-        commits = response.json()
-        total_commits += len(commits)
-        commits_url = response.links.get('next', {}).get('url')
-    return total_commits
+def compare_tables(table1, table2):
+    # Compare DataFrames
+    comparison = table1.compare(table2, align_axis=1, keep_shape=True, keep_equal=True)
+    return comparison
 
 def main():
-    repos = get_repos(REPOS_URL, GITHUB_USERNAME, GITHUB_TOKEN)
-    total_commits = 0
-    for repo in repos:
-        repo_full_name = repo['full_name']
-        print(f'Fetching commits for repository: {repo_full_name}')
-        repo_commit_count = get_commit_count(repo_full_name, GITHUB_USERNAME, GITHUB_TOKEN)
-        total_commits += repo_commit_count
-        print(f'{repo_full_name}: {repo_commit_count} commits')
-    print(f'Total commits across all repositories: {total_commits}')
+    table_name = 'YOUR_TABLE_NAME'  # Replace with your table name
+    
+    # Fetch data from both databases
+    table1_data = fetch_table_data(db1_config, table_name)
+    table2_data = fetch_table_data(db2_config, table_name)
 
-if __name__ == '__main__':
+    if table1_data is None or table2_data is None:
+        print("Failed to fetch data from one or both databases.")
+        return
+
+    # Compare the tables
+    comparison_result = compare_tables(table1_data, table2_data)
+    
+    if comparison_result.empty:
+        print("The tables are identical.")
+    else:
+        print("Differences found:")
+        print(comparison_result)
+
+if __name__ == "__main__":
     main()
