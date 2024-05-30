@@ -1,62 +1,15 @@
-import cx_Oracle
-import pandas as pd
+1. As the project transitioned to a different team and the new modernization project became the responsibility of the owning team, I faced the tough decision of taking back the development work, despite knowing there was no support for it. I volunteered to work after office hours to ensure that this project did not impact any BAU work or the team's time. Consequently, I worked on this project single-handedly during weekends and after office hours.
 
-# Database connection details
-db1_config = {
-    'user': 'user1',
-    'password': 'password1',
-    'dsn': 'dsn1'
-}
+2. I worked independently on the XYZService project, completing all development and testing tasks single-handedly.
 
-db2_config = {
-    'user': 'user2',
-    'password': 'password2',
-    'dsn': 'dsn2'
-}
+3. Recognizing the need for performance testing in AdvService, I took the initiative to learn the JMeter tool and successfully completed the performance testing for the project.
 
-def fetch_table_data(config, table_name):
-    try:
-        # Establish the database connection
-        conn = cx_Oracle.connect(
-            user=config['user'],
-            password=config['password'],
-            dsn=config['dsn']
-        )
-        # SQL query to fetch all data from the table
-        query = f"SELECT * FROM {table_name}"
-        # Use pandas to read SQL query into a DataFrame
-        df = pd.read_sql(query, conn)
-        # Close the connection
-        conn.close()
-        return df
-    except cx_Oracle.DatabaseError as e:
-        print(f"Database error: {e}")
-        return None
+4. I have been developing the Logging Core framework, adhering to LOB logging standards. This framework was piloted in the XYZService project and met the logging standards, as confirmed by the logging standard team. Currently, I am collaborating with the platform team to move this project to Artifactory.
 
-def compare_tables(table1, table2):
-    # Compare DataFrames
-    comparison = table1.compare(table2, align_axis=1, keep_shape=True, keep_equal=True)
-    return comparison
+5. The Finra development work is crucial and cannot be delayed due to its regulatory nature. We worked rigorously to complete the development without disrupting the existing solution. This required modifying almost 60% of the XYZBatch code and impacting over 50 tables. Additionally, frequent changes from Finra necessitated significant rework, which was managed without affecting our timeline. I primarily worked on Composite, developing Disclosure, which alone involved over 25 tables. I also addressed all vulnerabilities and test cases.
 
-def main():
-    table_name = 'YOUR_TABLE_NAME'  # Replace with your table name
-    
-    # Fetch data from both databases
-    table1_data = fetch_table_data(db1_config, table_name)
-    table2_data = fetch_table_data(db2_config, table_name)
+6. I actively participated in handling all production bugs and TCI work that came to our team, ensuring timely resolution and minimal impact on our deliverables.
 
-    if table1_data is None or table2_data is None:
-        print("Failed to fetch data from one or both databases.")
-        return
+7. A new rule in the EPL pipeline required us to manage Gitflow, Jenkins, and Sonar gate for compliance across nine components. I ensured all components met compliance standards, with two components having major impacts that I fixed through significant effort. 
 
-    # Compare the tables
-    comparison_result = compare_tables(table1_data, table2_data)
-    
-    if comparison_result.empty:
-        print("The tables are identical.")
-    else:
-        print("Differences found:")
-        print(comparison_result)
-
-if __name__ == "__main__":
-    main()
+8. On many occasions, I worked outside of the sprint work to address high-severity issues, ensuring that critical problems were resolved promptly without impacting the sprint's progress.
