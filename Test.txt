@@ -1,76 +1,21 @@
-using Microsoft.Extensions.Logging;
+SET SERVEROUTPUT ON
+SET LONG 10000
+SET LINESIZE 32000
 
-public interface ICustomLogger
-{
-    void LogException(Exception ex);
-    void LogError(string message);
-    void LogInfo(string message);
-    void LogCritical(string message);
-    void LogWarning(string message);
-}
+DECLARE
+  l_table_name VARCHAR2(30);
+  l_sql        VARCHAR2(32767);
+  l_clob       CLOB;
+BEGIN
+  FOR rec IN (SELECT table_name FROM all_tables WHERE owner = 'YOUR_SCHEMA') LOOP
+    l_table_name := rec.table_name;
+    l_sql := 'SELECT dbms_metadata.get_ddl(''TABLE'', ''' || l_table_name || ''', ''YOUR_SCHEMA'') FROM dual';
+    EXECUTE IMMEDIATE l_sql INTO l_clob;
+    DBMS_OUTPUT.put_line(l_clob);
+  END LOOP;
+END;
+/
 
-public class CustomLogger : ICustomLogger
-{
-    private readonly ILogger<CustomLogger> _logger;
-    private readonly string _projectType;
-
-    public CustomLogger(ILogger<CustomLogger> logger)
-    {
-        _logger = logger;
-        _projectType = "ABC"; // This can be set dynamically based on your application's requirements
-    }
-
-    public void LogException(Exception ex)
-    {
-        LogInternal(LogLevel.Error, "Exception", ex.Message, ex.StackTrace);
-    }
-
-    public void LogError(string message)
-    {
-        LogInternal(LogLevel.Error, "Error", message);
-    }
-
-    public void LogInfo(string message)
-    {
-        LogInternal(LogLevel.Information, "Info", message);
-    }
-
-    public void LogCritical(string message)
-    {
-        LogInternal(LogLevel.Critical, "Critical", message);
-    }
-
-    public void LogWarning(string message)
-    {
-        LogInternal(LogLevel.Warning, "Warning", message);
-    }
-
-    private void LogInternal(LogLevel logLevel, string category, string message, string stackTrace = null)
-    {
-        var dict = new Dictionary<string, object>
-        {
-            { "category", category },
-            { "message", message },
-            { "time", DateTime.Now.ToString() }
-        };
-
-        if (stackTrace != null)
-        {
-            dict.Add("StackTrace", stackTrace);
-        }
-
-        if (_projectType == "ABC")
-        {
-            _logger.Log(logLevel, "{@LogData}", dict);
-        }
-        else if (_projectType == "XYZ")
-        {
-            var stringDict = dict.ToDictionary(k => k.Key, v => v.Value.ToString());
-            _logger.Log(logLevel, "{@LogData}", stringDict);
-        }
-        else
-        {
-            throw new InvalidOperationException("Unknown project type");
-        }
-    }
-}
+SPOOL export_inserts.sql
+@export_inserts.sql
+SPOOL OFF
