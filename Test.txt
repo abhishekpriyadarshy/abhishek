@@ -1,21 +1,57 @@
-SET SERVEROUTPUT ON
-SET LONG 10000
-SET LINESIZE 32000
+import cx_Oracle
 
-DECLARE
-  l_table_name VARCHAR2(30);
-  l_sql        VARCHAR2(32767);
-  l_clob       CLOB;
-BEGIN
-  FOR rec IN (SELECT table_name FROM all_tables WHERE owner = 'YOUR_SCHEMA') LOOP
-    l_table_name := rec.table_name;
-    l_sql := 'SELECT dbms_metadata.get_ddl(''TABLE'', ''' || l_table_name || ''', ''YOUR_SCHEMA'') FROM dual';
-    EXECUTE IMMEDIATE l_sql INTO l_clob;
-    DBMS_OUTPUT.put_line(l_clob);
-  END LOOP;
-END;
-/
+# Oracle database connection details
+username = 'your_username'
+password = 'your_password'
+dsn = 'your_database'
+schema = 'YOUR_SCHEMA'
 
-SPOOL export_inserts.sql
-@export_inserts.sql
-SPOOL OFF
+# Output file for INSERT statements
+output_file = 'export_inserts.sql'
+
+# Connect to the Oracle database
+connection = cx_Oracle.connect(username, password, dsn)
+cursor = connection.cursor()
+
+# Get the list of tables in the schema
+cursor.execute(f"SELECT table_name FROM all_tables WHERE owner = '{schema}'")
+
+tables = cursor.fetchall()
+
+with open(output_file, 'w') as file:
+    for table in tables:
+        table_name = table[0]
+        file.write(f'-- Generating INSERT statements for table: {table_name}\n')
+
+        # Get the columns of the table
+        cursor.execute(f"SELECT column_name, data_type FROM all_tab_columns WHERE owner = '{schema}' AND table_name = '{table_name}' ORDER BY column_id")
+        columns = cursor.fetchall()
+
+        # Generate SELECT statement to fetch data
+        select_sql = f'SELECT * FROM {schema}.{table_name}'
+        cursor.execute(select_sql)
+        rows = cursor.fetchall()
+
+        for row in rows:
+            insert_sql = f'INSERT INTO {table_name} VALUES ('
+            for i, col in enumerate(columns):
+                col_name, data_type = col
+                value = row[i]
+                if data_type in ('VARCHAR2', 'CHAR', 'CLOB'):
+                    value = f"'{value.replace("'", "''")}'" if value is not None else 'NULL'
+                elif data_type in ('NUMBER', 'FLOAT'):
+                    value = str(value) if value is not None else 'NULL'
+                elif data_type in ('DATE', 'TIMESTAMP'):
+                    value = f"TO_DATE('{value.strftime('%Y-%m-%d %H:%M:%S')}', 'YYYY-MM-DD HH24:MI:SS')" if value is not None else 'NULL'
+                else:
+                    value = f"'{value}'" if value is not None else 'NULL'
+                insert_sql += f'{value}, '
+
+            insert_sql = insert_sql.rstrip(', ') + ');'
+            file.write(insert_sql + '\n')
+
+# Close the cursor and connection
+cursor.close()
+connection.close()
+
+print(f'INSERT statements have been written to {output_file}')
