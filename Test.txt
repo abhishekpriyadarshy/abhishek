@@ -1,57 +1,26 @@
-import cx_Oracle
+import pandas as pd
 
-# Oracle database connection details
-username = 'your_username'
-password = 'your_password'
-dsn = 'your_database'
-schema = 'YOUR_SCHEMA'
+# Load data from Excel files
+dev_df = pd.read_excel('.\DataCompare\Info_dev.xlsx')  # Replace with actual DEV excel file path
+prod_df = pd.read_excel('.\DataCompare\Info_prod.xlsx')  # Replace with actual PROD excel file path
 
-# Output file for INSERT statements
-output_file = 'export_inserts.sql'
+# Merge DEV and PROD tables on 'id' column (outer join)
+merged_df = pd.merge(dev_df, prod_df, on='Id', how='outer', suffixes=('_dev', '_prod'))
 
-# Connect to the Oracle database
-connection = cx_Oracle.connect(username, password, dsn)
-cursor = connection.cursor()
+# Create a comparison DataFrame starting with the 'id' column
+comparison_df = pd.DataFrame()
+comparison_df['Id'] = merged_df['Id']  # Keep the 'id' column
 
-# Get the list of tables in the schema
-cursor.execute(f"SELECT table_name FROM all_tables WHERE owner = '{schema}'")
+# Iterate over columns to compare values
+for col in dev_df.columns:
+    if col != 'Id':  # Skip the 'id' column for comparison
+        comparison_df[col] = merged_df.apply(
+            lambda row: True if row[f'{col}_dev'] == row[f'{col}_prod'] else False, axis=1)
 
-tables = cursor.fetchall()
+# Handle cases where rows are missing in DEV or PROD
+comparison_df['row_status'] = merged_df.apply(
+    lambda row: 'Missing in DEV' if pd.isnull(row[f'{col}_dev'])
+    else ('Missing in PROD' if pd.isnull(row[f'{col}_prod']) else 'Present'), axis=1)
 
-with open(output_file, 'w') as file:
-    for table in tables:
-        table_name = table[0]
-        file.write(f'-- Generating INSERT statements for table: {table_name}\n')
-
-        # Get the columns of the table
-        cursor.execute(f"SELECT column_name, data_type FROM all_tab_columns WHERE owner = '{schema}' AND table_name = '{table_name}' ORDER BY column_id")
-        columns = cursor.fetchall()
-
-        # Generate SELECT statement to fetch data
-        select_sql = f'SELECT * FROM {schema}.{table_name}'
-        cursor.execute(select_sql)
-        rows = cursor.fetchall()
-
-        for row in rows:
-            insert_sql = f'INSERT INTO {table_name} VALUES ('
-            for i, col in enumerate(columns):
-                col_name, data_type = col
-                value = row[i]
-                if data_type in ('VARCHAR2', 'CHAR', 'CLOB'):
-                    value = f"'{value.replace("'", "''")}'" if value is not None else 'NULL'
-                elif data_type in ('NUMBER', 'FLOAT'):
-                    value = str(value) if value is not None else 'NULL'
-                elif data_type in ('DATE', 'TIMESTAMP'):
-                    value = f"TO_DATE('{value.strftime('%Y-%m-%d %H:%M:%S')}', 'YYYY-MM-DD HH24:MI:SS')" if value is not None else 'NULL'
-                else:
-                    value = f"'{value}'" if value is not None else 'NULL'
-                insert_sql += f'{value}, '
-
-            insert_sql = insert_sql.rstrip(', ') + ');'
-            file.write(insert_sql + '\n')
-
-# Close the cursor and connection
-cursor.close()
-connection.close()
-
-print(f'INSERT statements have been written to {output_file}')
+# Save comparison result to a new Excel file, including the 'id' field
+comparison_df.to_excel('comparison_result.xlsx', index=False)
