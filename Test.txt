@@ -1,26 +1,43 @@
 import pandas as pd
+import numpy as np
 
 # Load data from Excel files
-dev_df = pd.read_excel('.\DataCompare\Info_dev.xlsx')  # Replace with actual DEV excel file path
-prod_df = pd.read_excel('.\DataCompare\Info_prod.xlsx')  # Replace with actual PROD excel file path
+dev_df = pd.read_excel('dev_data.xlsx')  # Replace with actual DEV excel file path
+prod_df = pd.read_excel('prod_data.xlsx')  # Replace with actual PROD excel file path
 
 # Merge DEV and PROD tables on 'id' column (outer join)
-merged_df = pd.merge(dev_df, prod_df, on='Id', how='outer', suffixes=('_dev', '_prod'))
+merged_df = pd.merge(dev_df, prod_df, on='id', how='outer', suffixes=('_dev', '_prod'))
 
 # Create a comparison DataFrame starting with the 'id' column
 comparison_df = pd.DataFrame()
-comparison_df['Id'] = merged_df['Id']  # Keep the 'id' column
+comparison_df['id'] = merged_df['id']  # Keep the 'id' column
 
-# Iterate over columns to compare values
+# Add columns to the comparison DataFrame with hyperlinks
 for col in dev_df.columns:
-    if col != 'Id':  # Skip the 'id' column for comparison
-        comparison_df[col] = merged_df.apply(
-            lambda row: True if row[f'{col}_dev'] == row[f'{col}_prod'] else False, axis=1)
+    if col != 'id':  # Skip the 'id' column for comparison
+        def create_hyperlink(row, col_name):
+            dev_value = row[f'{col_name}_dev']
+            prod_value = row[f'{col_name}_prod']
+            if pd.isnull(dev_value) or pd.isnull(prod_value):
+                return np.nan  # Skip rows with missing values
+            if dev_value != prod_value:
+                # Create hyperlink to DEV or PROD data cell depending on the mismatch
+                dev_link = f"DEV_Data!{col_name}{row.name+2}"  # +2 to adjust for header row
+                prod_link = f"PROD_Data!{col_name}{row.name+2}"
+                # Return a hyperlink to the mismatch cell in DEV or PROD based on where the difference is
+                return f'=HYPERLINK("#{dev_link}","FALSE")' if dev_value != prod_value else "TRUE"
+            else:
+                return "TRUE"
+
+        comparison_df[col] = merged_df.apply(create_hyperlink, col_name=col, axis=1)
 
 # Handle cases where rows are missing in DEV or PROD
 comparison_df['row_status'] = merged_df.apply(
     lambda row: 'Missing in DEV' if pd.isnull(row[f'{col}_dev'])
     else ('Missing in PROD' if pd.isnull(row[f'{col}_prod']) else 'Present'), axis=1)
 
-# Save comparison result to a new Excel file, including the 'id' field
-comparison_df.to_excel('comparison_result.xlsx', index=False)
+# Save comparison result and original data into an Excel file with multiple sheets
+with pd.ExcelWriter('comparison_result.xlsx', engine='openpyxl') as writer:
+    comparison_df.to_excel(writer, sheet_name='Comparison', index=False)  # Comparison result sheet
+    dev_df.to_excel(writer, sheet_name='DEV_Data', index=False)            # DEV data sheet
+    prod_df.to_excel(writer, sheet_name='PROD_Data', index=False)          # PROD data sheet
