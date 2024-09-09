@@ -1,6 +1,14 @@
 import pandas as pd
 import numpy as np
 
+# Helper function to convert a column index (0-based) to Excel letter (A, B, C, ...)
+def get_excel_column_letter(index):
+    letter = ''
+    while index >= 0:
+        letter = chr(index % 26 + 65) + letter
+        index = index // 26 - 1
+    return letter
+
 # Load data from Excel files
 dev_df = pd.read_excel('dev_data.xlsx')  # Replace with actual DEV excel file path
 prod_df = pd.read_excel('prod_data.xlsx')  # Replace with actual PROD excel file path
@@ -13,8 +21,10 @@ comparison_df = pd.DataFrame()
 comparison_df['id'] = merged_df['id']  # Keep the 'id' column
 
 # Add columns to the comparison DataFrame with hyperlinks
-for col in dev_df.columns:
+for idx, col in enumerate(dev_df.columns):
     if col != 'id':  # Skip the 'id' column for comparison
+        excel_column_letter = get_excel_column_letter(idx)  # Get the Excel-style column name (A, B, C, etc.)
+
         def create_hyperlink(row, col_name):
             dev_value = row[f'{col_name}_dev']
             prod_value = row[f'{col_name}_prod']
@@ -22,8 +32,8 @@ for col in dev_df.columns:
                 return np.nan  # Skip rows with missing values
             if dev_value != prod_value:
                 # Create hyperlink to DEV or PROD data cell depending on the mismatch
-                dev_link = f"DEV_Data!{col_name}{row.name+2}"  # +2 to adjust for header row
-                prod_link = f"PROD_Data!{col_name}{row.name+2}"
+                dev_link = f"DEV_Data!{excel_column_letter}{row.name+2}"  # +2 to adjust for header row
+                prod_link = f"PROD_Data!{excel_column_letter}{row.name+2}"
                 # Return a hyperlink to the mismatch cell in DEV or PROD based on where the difference is
                 return f'=HYPERLINK("#{dev_link}","FALSE")' if dev_value != prod_value else "TRUE"
             else:
