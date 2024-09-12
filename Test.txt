@@ -1,53 +1,81 @@
-import pandas as pd
-import numpy as np
+public async Task<string> GetAccessTokenAsync()
+{
+    var clientId = "your_client_id";
+    var clientSecret = "your_client_secret";
+    var tokenUrl = "https://your-token-url.com/oauth/token"; // Token URL
 
-# Helper function to convert a column index (0-based) to Excel letter (A, B, C, ...)
-def get_excel_column_letter(index):
-    letter = ''
-    while index >= 0:
-        letter = chr(index % 26 + 65) + letter
-        index = index // 26 - 1
-    return letter
+    using (var client = new HttpClient())
+    {
+        var postData = new List<KeyValuePair<string, string>>
+        {
+            new KeyValuePair<string, string>("client_id", clientId),
+            new KeyValuePair<string, string>("client_secret", clientSecret),
+            new KeyValuePair<string, string>("grant_type", "client_credentials")
+        };
 
-# Load data from Excel files
-dev_df = pd.read_excel('dev_data.xlsx')  # Replace with actual DEV excel file path
-prod_df = pd.read_excel('prod_data.xlsx')  # Replace with actual PROD excel file path
+        var content = new FormUrlEncodedContent(postData);
+        var response = await client.PostAsync(tokenUrl, content);
 
-# Merge DEV and PROD tables on 'id' column (outer join)
-merged_df = pd.merge(dev_df, prod_df, on='id', how='outer', suffixes=('_dev', '_prod'))
+        if (response.IsSuccessStatusCode)
+        {
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            var tokenData = JsonConvert.DeserializeObject<TokenResponse>(jsonResponse);
+            return tokenData.access_token; // Assuming 'access_token' is the field in the JSON response
+        }
+        else
+        {
+            throw new Exception("Error retrieving access token");
+        }
+    }
+}
 
-# Create a comparison DataFrame starting with the 'id' column
-comparison_df = pd.DataFrame()
-comparison_df['id'] = merged_df['id']  # Keep the 'id' column
+public class TokenResponse
+{
+    public string access_token { get; set; }
+    public int expires_in { get; set; }
+}
+----------------------------------------------------------------------------------------------------------------
+public async Task<string> CallApiWithAccessTokenAsync(string accessToken)
+{
+    var apiUrl = "https://your-api-url.com/resource"; // Replace with your actual API URL
 
-# Add columns to the comparison DataFrame with hyperlinks
-for idx, col in enumerate(dev_df.columns):
-    if col != 'id':  # Skip the 'id' column for comparison
-        excel_column_letter = get_excel_column_letter(idx)  # Get the Excel-style column name (A, B, C, etc.)
+    using (var client = new HttpClient())
+    {
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        def create_hyperlink(row, col_name):
-            dev_value = row[f'{col_name}_dev']
-            prod_value = row[f'{col_name}_prod']
-            if pd.isnull(dev_value) or pd.isnull(prod_value):
-                return np.nan  # Skip rows with missing values
-            if dev_value != prod_value:
-                # Create hyperlink to DEV or PROD data cell depending on the mismatch
-                dev_link = f"DEV_Data!{excel_column_letter}{row.name+2}"  # +2 to adjust for header row
-                prod_link = f"PROD_Data!{excel_column_letter}{row.name+2}"
-                # Return a hyperlink to the mismatch cell in DEV or PROD based on where the difference is
-                return f'=HYPERLINK("#{dev_link}","FALSE")' if dev_value != prod_value else "TRUE"
-            else:
-                return "TRUE"
+        var response = await client.GetAsync(apiUrl);
 
-        comparison_df[col] = merged_df.apply(create_hyperlink, col_name=col, axis=1)
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadAsStringAsync();
+        }
+        else
+        {
+            throw new Exception("Error calling API");
+        }
+    }
+}
+--------------------------------------------
+public class ApiController : Controller
+{
+    private readonly IApiService _apiService;
 
-# Handle cases where rows are missing in DEV or PROD
-comparison_df['row_status'] = merged_df.apply(
-    lambda row: 'Missing in DEV' if pd.isnull(row[f'{col}_dev'])
-    else ('Missing in PROD' if pd.isnull(row[f'{col}_prod']) else 'Present'), axis=1)
+    public ApiController(IApiService apiService)
+    {
+        _apiService = apiService;
+    }
 
-# Save comparison result and original data into an Excel file with multiple sheets
-with pd.ExcelWriter('comparison_result.xlsx', engine='openpyxl') as writer:
-    comparison_df.to_excel(writer, sheet_name='Comparison', index=False)  # Comparison result sheet
-    dev_df.to_excel(writer, sheet_name='DEV_Data', index=False)            # DEV data sheet
-    prod_df.to_excel(writer, sheet_name='PROD_Data', index=False)          # PROD data sheet
+    public async Task<IActionResult> GetData()
+    {
+        try
+        {
+            var accessToken = await _apiService.GetAccessTokenAsync();
+            var apiData = await _apiService.CallApiWithAccessTokenAsync(accessToken);
+            return Content(apiData);
+        }
+        catch (Exception ex)
+        {
+            return Content($"Error: {ex.Message}");
+        }
+    }
+}
