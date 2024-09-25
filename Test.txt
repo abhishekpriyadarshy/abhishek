@@ -1,81 +1,91 @@
-public async Task<string> GetAccessTokenAsync()
+using System;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace APICallWithOAuth
 {
-    var clientId = "your_client_id";
-    var clientSecret = "your_client_secret";
-    var tokenUrl = "https://your-token-url.com/oauth/token"; // Token URL
-
-    using (var client = new HttpClient())
+    class Program
     {
-        var postData = new List<KeyValuePair<string, string>>
+        static async Task Main(string[] args)
         {
-            new KeyValuePair<string, string>("client_id", clientId),
-            new KeyValuePair<string, string>("client_secret", clientSecret),
-            new KeyValuePair<string, string>("grant_type", "client_credentials")
-        };
+            // OAuth 2.0 Token endpoint
+            string tokenUrl = "https://your-auth-server.com/token";
+            string clientId = "your-client-id";
+            string clientSecret = "your-client-secret";
 
-        var content = new FormUrlEncodedContent(postData);
-        var response = await client.PostAsync(tokenUrl, content);
+            // API endpoint that requires OAuth 2.0 Token
+            string apiUrl = "https://your-api-server.com/your-post-endpoint";
 
-        if (response.IsSuccessStatusCode)
-        {
-            var jsonResponse = await response.Content.ReadAsStringAsync();
-            var tokenData = JsonConvert.DeserializeObject<TokenResponse>(jsonResponse);
-            return tokenData.access_token; // Assuming 'access_token' is the field in the JSON response
+            // Fetch OAuth token
+            var token = await GetOAuthToken(tokenUrl, clientId, clientSecret);
+
+            if (token != null)
+            {
+                // Call the API using the token
+                var result = await PostRequest(apiUrl, token);
+                Console.WriteLine(result);
+            }
         }
-        else
+
+        // Get OAuth 2.0 Token
+        static async Task<string> GetOAuthToken(string tokenUrl, string clientId, string clientSecret)
         {
-            throw new Exception("Error retrieving access token");
+            using (var client = new HttpClient())
+            {
+                var request = new HttpRequestMessage(HttpMethod.Post, tokenUrl);
+                
+                // Prepare the request body (depending on the grant type you are using)
+                var body = new StringContent($"client_id={clientId}&client_secret={clientSecret}&grant_type=client_credentials", 
+                                             Encoding.UTF8, 
+                                             "application/x-www-form-urlencoded");
+
+                request.Content = body;
+
+                var response = await client.SendAsync(request);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var tokenResponse = await response.Content.ReadAsStringAsync();
+
+                    // Assuming the token response is JSON
+                    // {"access_token": "your_access_token", "expires_in": 3600, ...}
+                    dynamic jsonResponse = Newtonsoft.Json.JsonConvert.DeserializeObject(tokenResponse);
+                    return jsonResponse.access_token;
+                }
+                else
+                {
+                    Console.WriteLine("Failed to get OAuth token");
+                    return null;
+                }
+            }
         }
-    }
-}
 
-public class TokenResponse
-{
-    public string access_token { get; set; }
-    public int expires_in { get; set; }
-}
-----------------------------------------------------------------------------------------------------------------
-public async Task<string> CallApiWithAccessTokenAsync(string accessToken)
-{
-    var apiUrl = "https://your-api-url.com/resource"; // Replace with your actual API URL
-
-    using (var client = new HttpClient())
-    {
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-        var response = await client.GetAsync(apiUrl);
-
-        if (response.IsSuccessStatusCode)
+        // Make a POST request with the token in the Authorization header
+        static async Task<string> PostRequest(string apiUrl, string token)
         {
-            return await response.Content.ReadAsStringAsync();
-        }
-        else
-        {
-            throw new Exception("Error calling API");
-        }
-    }
-}
---------------------------------------------
-public class ApiController : Controller
-{
-    private readonly IApiService _apiService;
+            using (var client = new HttpClient())
+            {
+                var request = new HttpRequestMessage(HttpMethod.Post, apiUrl);
 
-    public ApiController(IApiService apiService)
-    {
-        _apiService = apiService;
-    }
+                // Set the Authorization header
+                request.Headers.Add("Authorization", $"Bearer {token}");
 
-    public async Task<IActionResult> GetData()
-    {
-        try
-        {
-            var accessToken = await _apiService.GetAccessTokenAsync();
-            var apiData = await _apiService.CallApiWithAccessTokenAsync(accessToken);
-            return Content(apiData);
-        }
-        catch (Exception ex)
-        {
-            return Content($"Error: {ex.Message}");
+                // Prepare JSON body
+                var jsonBody = "{\"key1\": \"value1\", \"key2\": \"value2\"}"; // Replace with your actual JSON payload
+                request.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+                var response = await client.SendAsync(request);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadAsStringAsync();
+                }
+                else
+                {
+                    return $"Error: {response.StatusCode}";
+                }
+            }
         }
     }
 }
