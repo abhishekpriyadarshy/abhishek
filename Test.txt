@@ -89,3 +89,90 @@ namespace APICallWithOAuth
         }
     }
 }
+------------------------222222-----------
+Sure! Here's a more optimized version for GitHub Copilot:
+
+### Instructions for Improving and Creating Code and Tests
+1. **Optimize performance**:
+   - Refactor inefficient algorithms.
+   - Minimize memory usage.
+   - Use appropriate data structures.
+
+2. **Enhance readability**:
+   - Follow consistent naming conventions.
+   - Document code with meaningful comments.
+   - Break down complex methods into smaller functions.
+
+3. **Implement error handling**:
+   - Add exception handling for runtime errors.
+   - Catch and log all possible exceptions.
+   - Validate inputs to prevent unexpected behavior.
+
+4. **Maintain code consistency**:
+   - Adhere to coding standards and best practices.
+   - Use consistent indentation and formatting.
+   - Remove dead code and unused variables.
+
+5. **Increase test coverage**:
+   - Write unit tests for all critical functions and edge cases.
+   - Validate one behavior or functionality per test.
+   - Use parameterized tests for multiple scenarios.
+
+6. **Improve test readability**:
+   - Use descriptive names for test methods.
+   - Organize tests logically.
+   - Add comments explaining test purposes and expected outcomes.
+
+7. **Ensure test reliability**:
+   - Avoid hardcoding test data.
+   - Mock dependencies to isolate tested code.
+   - Ensure tests are independent and can run in any order.
+
+8. **Automate testing**:
+   - Integrate unit tests into the CI/CD pipeline.
+   - Monitor and address test failures promptly.
+   - Keep test suite up-to-date with codebase changes.
+
+### Improving Code Instructions
+1. **Optimize Performance**:
+   - Refactor inefficient algorithms.
+   - Minimize memory usage.
+   - Use appropriate data structures.
+
+2. **Enhance Readability**:
+   - Follow consistent naming conventions.
+   - Document code with meaningful comments.
+   - Break down complex methods into smaller functions.
+
+3. **Implement Error Handling**:
+   - Add exception handling for runtime errors.
+   - Catch and log all possible exceptions.
+   - Validate inputs to prevent unexpected behavior.
+
+4. **Maintain Code Consistency**:
+   - Adhere to coding standards and best practices.
+   - Use consistent indentation and formatting.
+   - Remove dead code and unused variables.
+
+### Improving Test Instructions
+1. **Increase Test Coverage**:
+   - Write unit tests for all critical functions and edge cases.
+   - Validate one behavior or functionality per test.
+   - Use parameterized tests for multiple scenarios.
+
+2. **Improve Test Readability**:
+   - Use descriptive names for test methods.
+   - Organize tests logically.
+   - Add comments explaining test purposes and expected outcomes.
+
+3. **Ensure Test Reliability**:
+   - Avoid hardcoding test data.
+   - Mock dependencies to isolate tested code.
+   - Ensure tests are independent and can run in any order.
+
+4. **Automate Testing**:
+   - Integrate unit tests into the CI/CD pipeline.
+   - Monitor and address test failures promptly.
+   - Keep test suite up-to-date with codebase changes.
+
+I hope this helps! Let me know if you need any further assistance or specific examples.
