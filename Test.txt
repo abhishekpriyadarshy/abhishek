@@ -1,243 +1,91 @@
-using System;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
+Here are the test cases for the given scenario:  
 
-namespace APICallWithOAuth
-{
-    class Program
-    {
-        static async Task Main(string[] args)
-        {
-            // OAuth 2.0 Token endpoint
-            string tokenUrl = "https://your-auth-server.com/token";
-            string clientId = "your-client-id";
-            string clientSecret = "your-client-secret";
+---
 
-            // API endpoint that requires OAuth 2.0 Token
-            string apiUrl = "https://your-api-server.com/your-post-endpoint";
+### **Test Suite: Jurisdiction Approval Workflow for U4/U5**  
 
-            // Fetch OAuth token
-            var token = await GetOAuthToken(tokenUrl, clientId, clientSecret);
+#### **Test Case 1: U4/U5 Added to Jurisdiction – Workflow Approval Pending & Composite Batch Execution**  
+**Preconditions:**  
+- User has added U4/U5 records to jurisdiction for approval.  
+- A new service request is created under the worklist.  
 
-            if (token != null)
-            {
-                // Call the API using the token
-                var result = await PostRequest(apiUrl, token);
-                Console.WriteLine(result);
-            }
-        }
+**Test Steps:**  
+1. Navigate to the workflow and verify that the U4/U5 records are available for approval.  
+2. **Do not approve** the records in the workflow.  
+3. Run the **Composite Batch** process.  
+4. After the batch run, verify that:  
+   - The U4/U5 records are still listed under jurisdiction (not removed or closed).  
+   - The service request is still present under the worklist.  
+   - No error is thrown when accessing the same service request.  
 
-        // Get OAuth 2.0 Token
-        static async Task<string> GetOAuthToken(string tokenUrl, string clientId, string clientSecret)
-        {
-            using (var client = new HttpClient())
-            {
-                var request = new HttpRequestMessage(HttpMethod.Post, tokenUrl);
-                
-                // Prepare the request body (depending on the grant type you are using)
-                var body = new StringContent($"client_id={clientId}&client_secret={clientSecret}&grant_type=client_credentials", 
-                                             Encoding.UTF8, 
-                                             "application/x-www-form-urlencoded");
+**Expected Result:**  
+- U4/U5 records remain in the jurisdiction list.  
+- The service request remains active in the worklist.  
+- No errors occur when accessing the request.  
 
-                request.Content = body;
+---
 
-                var response = await client.SendAsync(request);
+#### **Test Case 2: U4/U5 Added to Jurisdiction – Process via Finra Direct & Composite Batch Execution**  
+**Preconditions:**  
+- User has added U4/U5 records to jurisdiction for approval.  
+- A new service request is created under the worklist.  
+- The records are not approved in the workflow.  
 
-                if (response.IsSuccessStatusCode)
-                {
-                    var tokenResponse = await response.Content.ReadAsStringAsync();
+**Test Steps:**  
+1. Use the **same CRD** to process the records via the **Finra Direct System**.  
+2. Submit the U4/U5 records using the **Finra Direct option**.  
+3. Run the **Composite Batch** process.  
+4. After the batch run, verify that:  
+   - The U4/U5 records are **removed/closed** in the jurisdiction list.  
+   - The service request is marked as completed and closed.  
 
-                    // Assuming the token response is JSON
-                    // {"access_token": "your_access_token", "expires_in": 3600, ...}
-                    dynamic jsonResponse = Newtonsoft.Json.JsonConvert.DeserializeObject(tokenResponse);
-                    return jsonResponse.access_token;
-                }
-                else
-                {
-                    Console.WriteLine("Failed to get OAuth token");
-                    return null;
-                }
-            }
-        }
+**Expected Result:**  
+- U4/U5 records should be closed in the jurisdiction.  
+- The service request should be marked as completed and removed from the worklist.  
 
-        // Make a POST request with the token in the Authorization header
-        static async Task<string> PostRequest(string apiUrl, string token)
-        {
-            using (var client = new HttpClient())
-            {
-                var request = new HttpRequestMessage(HttpMethod.Post, apiUrl);
+---------------------------------------------------------------------------------------------------------
+Here are the additional test cases for the provided scenarios:  
 
-                // Set the Authorization header
-                request.Headers.Add("Authorization", $"Bearer {token}");
+---
 
-                // Prepare JSON body
-                var jsonBody = "{\"key1\": \"value1\", \"key2\": \"value2\"}"; // Replace with your actual JSON payload
-                request.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+### **Test Case 3: U4/U5 Added to Jurisdiction – Not Available in Finra & Composite/IIR Batch Execution**  
+**Preconditions:**  
+- User has added U4/U5 records to jurisdiction for approval.  
+- The U4/U5 records are **not available in Finra**.  
+- The **U4/U5 Submission batch is not run**.  
 
-                var response = await client.SendAsync(request);
+**Test Steps:**  
+1. Verify that the U4/U5 records exist in the jurisdiction list.  
+2. Run the **Composite/IIR Batch** process.  
+3. After the batch run, verify that:  
+   - The U4/U5 records **are not closed** in the jurisdiction list.  
+   - The service request is still available in the worklist.  
+   - No errors occur when accessing the records.  
 
-                if (response.IsSuccessStatusCode)
-                {
-                    return await response.Content.ReadAsStringAsync();
-                }
-                else
-                {
-                    return $"Error: {response.StatusCode}";
-                }
-            }
-        }
-    }
-}
-------------------------222222-----------
-Sure! Here's a more optimized version for GitHub Copilot:
+**Expected Result:**  
+- U4/U5 records remain in the jurisdiction list (not closed).  
+- The service request remains active in the worklist.  
+- No errors are thrown.  
 
-### Instructions for Improving and Creating Code and Tests
-1. **Optimize performance**:
-   - Refactor inefficient algorithms.
-   - Minimize memory usage.
-   - Use appropriate data structures.
+---
 
-2. **Enhance readability**:
-   - Follow consistent naming conventions.
-   - Document code with meaningful comments.
-   - Break down complex methods into smaller functions.
+### **Test Case 4: U4/U5 Submission via Super User & Composite Batch Execution**  
+**Preconditions:**  
+- User has **super user access**.  
+- A U4/U5 request is added in the jurisdiction.  
 
-3. **Implement error handling**:
-   - Add exception handling for runtime errors.
-   - Catch and log all possible exceptions.
-   - Validate inputs to prevent unexpected behavior.
+**Test Steps:**  
+1. Verify that the U4/U5 request exists in the jurisdiction list.  
+2. Run the **U4/U5 Submission Batch** to process the records.  
+3. Verify that the records are processed and updated in the jurisdiction.  
+4. Run the **Composite Batch** to fetch the latest U4/U5 submission data.  
+5. After the Composite Batch execution, verify that:  
+   - The jurisdiction list is updated with the latest U4/U5 data.  
+   - The records reflect the latest Finra submission status.  
 
-4. **Maintain code consistency**:
-   - Adhere to coding standards and best practices.
-   - Use consistent indentation and formatting.
-   - Remove dead code and unused variables.
+**Expected Result:**  
+- U4/U5 records should be updated in the jurisdiction list.  
+- The latest U4/U5 submission data is available after the composite batch run.  
 
-5. **Increase test coverage**:
-   - Write unit tests for all critical functions and edge cases.
-   - Validate one behavior or functionality per test.
-   - Use parameterized tests for multiple scenarios.
 
-6. **Improve test readability**:
-   - Use descriptive names for test methods.
-   - Organize tests logically.
-   - Add comments explaining test purposes and expected outcomes.
 
-7. **Ensure test reliability**:
-   - Avoid hardcoding test data.
-   - Mock dependencies to isolate tested code.
-   - Ensure tests are independent and can run in any order.
-
-8. **Automate testing**:
-   - Integrate unit tests into the CI/CD pipeline.
-   - Monitor and address test failures promptly.
-   - Keep test suite up-to-date with codebase changes.
-
-### Improving Code Instructions
-1. **Optimize Performance**:
-   - Refactor inefficient algorithms.
-   - Minimize memory usage.
-   - Use appropriate data structures.
-
-2. **Enhance Readability**:
-   - Follow consistent naming conventions.
-   - Document code with meaningful comments.
-   - Break down complex methods into smaller functions.
-
-3. **Implement Error Handling**:
-   - Add exception handling for runtime errors.
-   - Catch and log all possible exceptions.
-   - Validate inputs to prevent unexpected behavior.
-
-4. **Maintain Code Consistency**:
-   - Adhere to coding standards and best practices.
-   - Use consistent indentation and formatting.
-   - Remove dead code and unused variables.
-
-### Improving Test Instructions
-1. **Increase Test Coverage**:
-   - Write unit tests for all critical functions and edge cases.
-   - Validate one behavior or functionality per test.
-   - Use parameterized tests for multiple scenarios.
-
-2. **Improve Test Readability**:
-   - Use descriptive names for test methods.
-   - Organize tests logically.
-   - Add comments explaining test purposes and expected outcomes.
-
-3. **Ensure Test Reliability**:
-   - Avoid hardcoding test data.
-   - Mock dependencies to isolate tested code.
-   - Ensure tests are independent and can run in any order.
-
-4. **Automate Testing**:
-   - Integrate unit tests into the CI/CD pipeline.
-   - Monitor and address test failures promptly.
-   - Keep test suite up-to-date with codebase changes.
-
-I hope this helps! Let me know if you need any further assistance or specific examples.
-----------------5555555-----------
-1. Instructions for Improving and Creating Code and Tests
-
-Follow these best practices to write efficient, maintainable code and reliable tests.
-
-Code Guidelines
-	•	Optimize performance with efficient algorithms and memory usage.
-	•	Improve readability using clear names, comments, and modular functions.
-	•	Implement error handling with exception management and input validation.
-	•	Maintain consistency by following coding standards and removing unused code.
-
-Test Guidelines
-	•	Ensure high test coverage, including edge cases.
-	•	Use clear test names and structured organization.
-	•	Mock dependencies for reliable, independent tests.
-	•	Automate testing in CI/CD and update test suites regularly.
-
-2. Improving Code Instructions
-
-Write clean, optimized, and error-free code by following these principles.
-
-Performance
-	•	Refactor inefficient code.
-	•	Use optimized data structures.
-	•	Improve database queries and API calls.
-
-Readability
-	•	Use descriptive names for variables and functions.
-	•	Keep functions small and modular.
-	•	Add relevant, concise comments.
-
-Error Handling
-	•	Handle exceptions properly.
-	•	Log meaningful error messages.
-	•	Validate inputs to prevent failures.
-
-Consistency
-	•	Follow coding standards.
-	•	Maintain uniform formatting.
-	•	Remove dead code and unused variables.
-
-3. Improving Test Instructions
-
-Write effective and maintainable tests with these practices.
-
-Test Coverage
-	•	Cover critical functionality and edge cases.
-	•	Use parameterized tests for multiple scenarios.
-
-Test Readability
-	•	Name tests descriptively (e.g., Should_ReturnError_When_InputIsInvalid).
-	•	Organize tests logically.
-	•	Document test purpose briefly.
-
-Test Reliability
-	•	Mock dependencies to isolate tests.
-	•	Avoid hardcoded test data.
-	•	Ensure tests run independently.
-
-Automation
-	•	Integrate tests into CI/CD.
-	•	Fix failing tests promptly.
-	•	Keep tests updated with code changes.
-
-These steps ensure high-quality code and reliable testing.
