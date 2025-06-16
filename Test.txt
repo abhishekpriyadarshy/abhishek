@@ -1,3 +1,55 @@
+
+
+// Task:
+// Scan all .NET (.cs) files and related XML-handling components in the workspace to detect XML External Entity (XXE) injection vulnerabilities.
+
+// Objectives:
+// 1. Identify insecure XML parsing operations using:
+//    - XmlDocument
+//    - XmlReader
+//    - XDocument
+//    - XmlSerializer
+//    - Any other XML deserialization or parsing mechanisms
+// 2. Flag any usage where DTD processing is enabled, or external entities can be resolved by default.
+// 3. Highlight instances where user-controlled input (e.g., file upload, request body, web services) is directly parsed as XML without proper secure settings.
+
+// Vulnerable examples:
+// var xmlDoc = new XmlDocument();
+// xmlDoc.LoadXml(userInput); // DTD processing enabled by default in older .NET versions
+
+// XmlReader reader = XmlReader.Create(inputStream); // Unsafe if settings not locked down
+
+// Secure .NET example using XmlReaderSettings:
+// var settings = new XmlReaderSettings
+// {
+//     DtdProcessing = DtdProcessing.Prohibit,
+//     XmlResolver = null
+// };
+// var reader = XmlReader.Create(inputStream, settings);
+
+// For each vulnerability found:
+// - Report file name and line number
+// - Explain the risk of XXE (e.g., accessing local files, SSRF, memory exhaustion)
+// - Recommend specific secure settings to harden XML parsing
+
+// Best Practices for Prevention:
+// ✅ Disable DTD processing using `DtdProcessing = Prohibit`
+// ✅ Set `XmlResolver = null` on XmlDocument, XmlReader, or XmlSerializer
+// ✅ Use `SecureString` or streams to reduce exposure where possible
+// ✅ Avoid using `LoadXml()` or `XDocument.Load()` on untrusted input without secure settings
+
+// Begin scanning .cs files and flag all XML processing logic that allows:
+// - Default or enabled DTD processing
+- Custom resolvers that are not null
+- Parsing of untrusted XML without secure settings
+
+// Then, generate a secure version of each risky usage.
+
+
+
+
+
+9999999999999999999999
 // Task:
 // Analyze all .NET (.cs), Razor (.cshtml), and Web API files in the workspace to detect Cross-Site Request Forgery (CSRF) vulnerabilities.
 
