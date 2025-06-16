@@ -1,4 +1,44 @@
 // Task:
+// Scan all .NET (.cs) files in the workspace to detect potential Insecure Direct Object Reference (IDOR) vulnerabilities.
+
+// Objective:
+// 1. Identify code where sensitive resources (like files, database records, entity IDs) are accessed directly based on user-supplied input (e.g., ID in query string or form field) **without proper authorization checks**.
+// 2. Look for patterns like:
+//    - Accessing database records using a user-supplied ID (e.g., `var order = db.Orders.Find(orderId);`)
+//    - Accessing file paths or internal objects using query/form parameters
+//    - URL parameters mapped directly to data objects with no ownership or permission checks
+// 3. Highlight code that allows access to objects based solely on user input without confirming that the user owns the object or is authorized to access it.
+
+// Examples of vulnerable code:
+// var document = db.Documents.Find(Request.Query["id"]);
+// return File(document.Path, "application/pdf");
+
+// For each vulnerability found:
+// - Report file name, method, and line number
+// - Explain why it's vulnerable to IDOR
+// - Provide secure code fixes using:
+//    a) Access control checks (e.g., `document.UserId == currentUser.Id`)
+//    b) Claims-based or role-based authorization
+//    c) Explicit object ownership validation
+
+// Example fix:
+public IActionResult GetDocument(int id)
+{
+    var document = db.Documents.Find(id);
+    if (document == null || document.OwnerId != User.GetUserId())
+        return Forbid();
+
+    return File(document.Path, "application/pdf");
+}
+
+// Begin scanning the workspace for IDOR issues and generate secure alternatives for each:
+	•	❌ Avoid: Returning objects directly from IDs without auth check
+	•	✅ Use: User.Identity, HttpContext.User.Claims, or session info to verify object access
+	•	✅ Ensure: Ownership or permission checks before exposing object data
+
+222222222222222
+
+// Task:
 // Scan all .NET (.cs) files in the workspace to detect insecure deserialization vulnerabilities.
 
 // Objective:
