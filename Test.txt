@@ -1,4 +1,60 @@
+// Task:
+// Analyze all .NET (.cs), Razor (.cshtml), and Web API files in the workspace to detect Cross-Site Request Forgery (CSRF) vulnerabilities.
 
+// Objectives:
+// 1. Identify controller actions (especially POST/PUT/DELETE) that change server state and are missing CSRF protection.
+// 2. Detect absence of `[ValidateAntiForgeryToken]` on POST handlers in ASP.NET MVC or Razor Pages.
+// 3. Check Razor forms for missing `@Html.AntiForgeryToken()`.
+// 4. For APIs, check if:
+//    - CSRF protection middleware is not configured
+//    - There are unsafe CORS or cookie policies allowing cross-origin access
+// 5. Highlight any method that accepts sensitive state changes (e.g., account updates, transfers, deletes) and is not properly protected.
+
+// Vulnerable MVC example:
+// [HttpPost]
+// public IActionResult UpdateProfile(User user) { ... } // ← No CSRF token validation
+
+// Vulnerable Razor view example:
+// <form asp-action="UpdateProfile" method="post">
+//     <!-- Missing @Html.AntiForgeryToken() -->
+//     <input name="email" />
+// </form>
+
+// Expected secure alternatives:
+// ✅ Decorate all non-GET actions with `[ValidateAntiForgeryToken]` in MVC
+// ✅ Include `@Html.AntiForgeryToken()` in all Razor form posts
+// ✅ For APIs, enforce token headers or same-site cookie checks
+// ✅ Configure `services.AddAntiforgery()` with secure cookie options (HttpOnly, Secure, SameSite=Strict)
+// ✅ Ensure CORS policy does not allow credentials from untrusted origins
+
+// Secure MVC example:
+// [HttpPost]
+// [ValidateAntiForgeryToken]
+// public IActionResult UpdateProfile(User user) { ... }
+
+// Secure Razor form:
+// <form asp-action="UpdateProfile" method="post">
+//     @Html.AntiForgeryToken()
+//     <input name="email" />
+// </form>
+
+// Secure API idea (token-based):
+// - Require custom CSRF token header (e.g., `X-CSRF-TOKEN`) and verify server-side before processing the request.
+
+// Begin scanning the workspace for:
+// - Missing anti-forgery validation on actions
+// - Razor forms missing anti-forgery tokens
+// - Web APIs that modify state without CSRF defense
+// - Insecure or misconfigured CORS/anti-forgery setups
+
+// Then, provide secure replacements for each case.
+
+
+
+
+
+
+88888888888888888888
 // Task:
 // Scan the entire workspace including all .NET (.cs) files, Razor (.cshtml) views, and any HTML output logic,
 // to detect Cross-Site Scripting (XSS) vulnerabilities.
