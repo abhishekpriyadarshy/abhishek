@@ -1,4 +1,60 @@
 // Task:
+// Scan the entire workspace, including all .NET (.cs) files, appsettings.json, and other configuration files,
+// to detect and fix sensitive data exposure vulnerabilities.
+
+// Objectives:
+// 1. Detect hardcoded secrets or sensitive data such as:
+//    - API keys
+//    - Passwords
+//    - Connection strings
+//    - Certificates/private keys
+//    - Tokens or secret environment values
+// 2. Identify unsafe logging or output of sensitive information.
+// 3. Check configuration files (e.g., appsettings.json, app.config, secrets.json) for:
+//    - Storing secrets in plain text
+//    - Lack of use of secure vaults or environment variables
+// 4. Detect code that logs or returns sensitive data (e.g., logging passwords, returning entire user objects in API responses).
+
+// Vulnerable examples:
+// - In appsettings.json:
+//   "ConnectionStrings": {
+//     "DefaultConnection": "Server=myServer;User Id=sa;Password=MyP@ssword123;"
+//   }
+// - In code:
+//   var password = "MyHardcodedPassword";
+//   _logger.LogInformation("User password: " + password);
+
+// For each vulnerability found:
+// - Return the file name, line number, and the type of sensitive data exposed
+// - Explain the risk
+// - Suggest secure alternatives, such as:
+//   ✅ Moving secrets to environment variables or Azure Key Vault / AWS Secrets Manager
+//   ✅ Using ASP.NET Core’s Secret Manager during development
+//   ✅ Masking or excluding sensitive fields in logs or responses
+//   ✅ Applying [JsonIgnore] or DTO mappings to avoid overexposing models in API
+
+// Example secure configuration:
+// - In appsettings.json:
+//   "ConnectionStrings": {
+//     "DefaultConnection": "UseEnvironmentVariable:DefaultConnection"
+//   }
+// - In code:
+//   var password = Environment.GetEnvironmentVariable("DB_PASSWORD");
+//   _logger.LogInformation("User login attempted for: " + username); // Avoid logging password
+
+// Start scanning all .cs, .json, .config, and .secrets files for:
+// - Hardcoded passwords, tokens, keys
+// - Unsafe logging
+// - Exposed user data in APIs
+// - Missing encryption or masking for sensitive config entries
+// - Use of plaintext secrets in any config file
+
+// Then provide remediation for each finding.
+
+
+
+5555555555555555555
+// Task:
 // Scan all .NET (.cs) files in the current workspace to detect Server-Side Request Forgery (SSRF) vulnerabilities.
 
 // Objective:
