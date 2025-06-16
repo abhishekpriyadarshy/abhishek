@@ -1,4 +1,50 @@
 // Task:
+// Scan all .NET (.cs) files in the workspace to detect insecure deserialization vulnerabilities.
+
+// Objective:
+// 1. Identify usage of unsafe deserialization APIs or libraries, such as:
+//    - BinaryFormatter.Deserialize
+//    - SoapFormatter.Deserialize
+//    - NetDataContractSerializer
+//    - JavaScriptSerializer
+//    - DataContractSerializer with untrusted data
+// 2. Highlight code where untrusted input (e.g., from HTTP requests, form data, files, query parameters) is passed into deserialization methods without validation or type-checking.
+// 3. Mark these as insecure deserialization vulnerabilities.
+
+// Examples of insecure code patterns to detect:
+// - new BinaryFormatter().Deserialize(stream);
+// - formatter.Deserialize(Request.Body);
+
+// For each issue found:
+// - List the file name, method name, and line number.
+// - Explain why the code is vulnerable.
+// - Suggest a safer alternative (e.g. use safe serializers like System.Text.Json or Newtonsoft.Json with type restrictions).
+// - If deserialization is necessary, ensure:
+//    a) Type filtering or known safe types are used
+//    b) Input is validated
+//    c) Dangerous formatters (BinaryFormatter, SoapFormatter) are avoided
+
+// Example vulnerable code:
+public object DeserializeInput(byte[] data)
+{
+    var formatter = new BinaryFormatter();
+    using var stream = new MemoryStream(data);
+    return formatter.Deserialize(stream);
+}
+
+// Example secure fix:
+public T? SafeDeserialize<T>(string json)
+{
+    return JsonSerializer.Deserialize<T>(json); // System.Text.Json is type-safe and avoids arbitrary code execution
+}
+
+// Begin scanning and remediating insecure deserialization patterns across the workspace:
+
+
+
+
+111111111111111111111111
+// Task:
 // Scan all .NET source code files in the current workspace for Command Injection vulnerabilities.
 
 // Objective:
