@@ -1,3 +1,50 @@
+
+// Task:
+// Scan all .NET (.cs) files in the workspace to detect SQL Injection (SQLi) vulnerabilities.
+
+// Objectives:
+// 1. Identify code where raw or interpolated SQL queries are executed using:
+//    - ADO.NET (e.g., SqlCommand, OleDbCommand)
+//    - Entity Framework with raw SQL (e.g., dbContext.Database.ExecuteSqlRaw, FromSqlRaw)
+//    - Dapper or other ORM/query frameworks
+// 2. Detect patterns where user input is directly concatenated or interpolated into SQL strings.
+// 3. Flag any instance where:
+//    - String concatenation or interpolation is used to build SQL queries
+//    - Parameters are not used with parameterized queries or ORM-safe APIs
+//    - Queries are constructed using untrusted input (from form fields, query parameters, etc.)
+
+// Vulnerable examples to detect:
+// ADO.NET:
+// string query = "SELECT * FROM Users WHERE Username = '" + userInput + "'";
+// SqlCommand cmd = new SqlCommand(query, connection);
+
+// Entity Framework:
+// dbContext.Users.FromSqlRaw("SELECT * FROM Users WHERE Name = '" + name + "'");
+
+// For each vulnerable usage:
+// - Report file name, method name, and line number
+// - Explain the risk of SQL injection
+// - Suggest a secure fix using parameterized queries or ORM methods
+
+// Secure ADO.NET example:
+// string query = "SELECT * FROM Users WHERE Username = @username";
+// SqlCommand cmd = new SqlCommand(query, connection);
+// cmd.Parameters.AddWithValue("@username", userInput);
+
+// Secure EF Core example:
+// dbContext.Users.FromSqlInterpolated($"SELECT * FROM Users WHERE Name = {name}");
+
+// Best Practices:
+// ✅ Always use parameterized queries (ADO.NET, EF, Dapper, etc.)
+// ✅ Use FromSqlInterpolated (EF Core) instead of FromSqlRaw when injecting variables
+// ✅ Validate input where applicable
+// ❌ Never concatenate or interpolate untrusted input directly into SQL strings
+
+// Begin scanning the entire codebase for SQLi risks and generate secure refactored code where applicable:
+
+
+
+66666666666666666666
 // Task:
 // Scan the entire workspace, including all .NET (.cs) files, appsettings.json, and other configuration files,
 // to detect and fix sensitive data exposure vulnerabilities.
