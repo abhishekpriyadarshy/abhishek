@@ -1,4 +1,45 @@
 // Task:
+// Analyze all .NET (.cs) files in the current workspace to detect insecure session management practices,
+// particularly predictable or weak session identifiers.
+
+// Objective:
+// 1. Detect where session IDs or tokens are being generated, assigned, or handled insecurely.
+// 2. Identify insecure patterns such as:
+//    - Hardcoded or sequential session tokens
+//    - Usage of predictable values (e.g., username, timestamp, incrementing counters) for session IDs
+//    - Manual session handling without cryptographic randomness
+//    - Lack of secure cookie flags (HttpOnly, Secure, SameSite)
+//    - Session IDs passed in URLs
+
+// Vulnerable example:
+// HttpContext.Session.SetString("SessionId", user.Id.ToString() + DateTime.Now.Ticks);
+
+// Expected secure practices to suggest:
+// ✅ Use ASP.NET Core's built-in session management.
+// ✅ Ensure session tokens are cryptographically random (e.g., use RNGCryptoServiceProvider or secure GUID).
+// ✅ Set cookie flags like Secure, HttpOnly, SameSite.
+// ✅ Never pass session tokens in query strings or URLs.
+
+// Secure example:
+// - Let ASP.NET Core handle the session cookie with:
+// services.AddSession(options =>
+// {
+//     options.Cookie.HttpOnly = true;
+//     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+//     options.Cookie.SameSite = SameSiteMode.Strict;
+//     options.IdleTimeout = TimeSpan.FromMinutes(20);
+// });
+
+// For each vulnerability found:
+// - Return the file name, method, and line number.
+// - Explain why the session handling is insecure.
+// - Suggest a corrected version using cryptographically secure methods and best practices.
+
+// Begin scanning all files for insecure session identifier generation and usage:
+
+
+3333333333333333333
+// Task:
 // Scan all .NET (.cs) files in the workspace to detect potential Insecure Direct Object Reference (IDOR) vulnerabilities.
 
 // Objective:
