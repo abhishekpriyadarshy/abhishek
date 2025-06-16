@@ -1,4 +1,53 @@
 // Task:
+// Scan all .NET (.cs) files in the current workspace to detect Server-Side Request Forgery (SSRF) vulnerabilities.
+
+// Objective:
+// 1. Identify places in the code where user-controlled input is used to make HTTP/HTTPS or other internal service requests using:
+//    - HttpClient
+//    - WebClient
+//    - HttpWebRequest
+//    - RestSharp or any third-party HTTP libraries
+// 2. Flag any instance where the destination URL or host is derived directly from user input without validation or restriction.
+// 3. Highlight code that can allow attackers to:
+//    - Target internal services (e.g., localhost, metadata endpoints)
+//    - Bypass firewall/IP restrictions
+//    - Extract sensitive data via manipulated internal requests
+
+// Vulnerable example:
+// var client = new HttpClient();
+// var response = await client.GetAsync(userInputUrl);
+
+// Expected output:
+// - List of vulnerable files and line numbers
+// - Explanation of how the code is vulnerable to SSRF
+// - Recommended secure alternative using URL validation, allowlist, or input restriction
+
+// Secure example fix:
+public async Task<IActionResult> SafeFetch(string userUrl)
+{
+    // Validate and allow only trusted domains
+    var allowedHosts = new[] { "api.example.com", "trusted.com" };
+    if (!Uri.TryCreate(userUrl, UriKind.Absolute, out var uri) || !allowedHosts.Contains(uri.Host))
+        return BadRequest("Untrusted or invalid URL");
+
+    using var client = new HttpClient();
+    var response = await client.GetAsync(uri);
+    var content = await response.Content.ReadAsStringAsync();
+    return Ok(content);
+}
+
+// Best Practices:
+// ✅ Use an allowlist of trusted domains
+✅ Validate URLs with Uri.TryCreate and check scheme/host
+✅ Reject requests to internal IP ranges (e.g., 127.0.0.1, 169.254.169.254)
+// ❌ Avoid passing raw user input into HTTP requests without strict validation
+
+// Begin scanning the codebase for potential SSRF risks and recommend secure replacements:
+
+
+4444444444444444444
+
+// Task:
 // Analyze all .NET (.cs) files in the current workspace to detect insecure session management practices,
 // particularly predictable or weak session identifiers.
 
