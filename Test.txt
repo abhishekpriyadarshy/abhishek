@@ -1,5 +1,55 @@
 
 // Task:
+// Scan the entire workspace including all .NET (.cs) files, Razor (.cshtml) views, and any HTML output logic,
+// to detect Cross-Site Scripting (XSS) vulnerabilities.
+
+// Objectives:
+// 1. Identify locations where untrusted user input is rendered into HTML output without proper encoding or sanitization.
+// 2. Detect vulnerable patterns such as:
+//    - Writing user input directly into Razor views using @userInput
+//    - Manually constructing HTML with user input in controllers or views
+//    - Using Response.Write(), Html.Raw(), or innerHTML assignments with unsanitized values
+//    - JavaScript injection via dynamic script content
+// 3. Pay attention to inputs from Request.Query, Form, RouteData, Model properties, or external sources
+
+// Vulnerable Razor example:
+// <div>@Request.Query["message"]</div>
+
+// Vulnerable controller example:
+// ViewBag.Script = "<script>" + userInput + "</script>";
+
+// Unsafe use of Html.Raw:
+// @Html.Raw(Request.Form["comment"])
+
+// For each issue found:
+// - List the file name, line number, and a description of the vulnerability
+// - Suggest secure alternatives using:
+//   ✅ Razor HTML encoding (default `@` directive)
+//   ✅ Html.Encode() in code-behind or controllers
+//   ✅ Avoiding Html.Raw unless content is known-safe or sanitized
+//   ✅ Using AntiXSS library or custom sanitizer for rich input
+//   ✅ Encoding JSON in Razor using `@Html.Raw(Json.Encode(...))`
+
+// Secure Razor example:
+// <div>@Html.Encode(Request.Query["message"])</div>
+
+// Secure controller output:
+// ViewBag.ScriptSafe = HtmlEncoder.Default.Encode(userInput);
+
+// Best Practices:
+// ✅ Always encode user-supplied data before rendering to the browser
+// ✅ Use AntiXSS library or WebUtility.HtmlEncode() in back-end logic
+// ✅ Avoid injecting data into script tags or inline event handlers
+// ❌ Never use Html.Raw or string concatenation to inject user input into HTML
+
+// Begin scanning all Razor views (.cshtml), controller files (.cs), and HTML output logic
+// for XSS vulnerabilities and provide a fixed version of the affected code:
+
+
+
+
+7777777777777777777777
+// Task:
 // Scan all .NET (.cs) files in the workspace to detect SQL Injection (SQLi) vulnerabilities.
 
 // Objectives:
