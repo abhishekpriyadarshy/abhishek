@@ -1,3 +1,38 @@
+// Task:
+// Scan all .NET source code files in the current workspace for Command Injection vulnerabilities.
+
+// Objective:
+// 1. Detect unsafe use of command execution methods like:
+//    - Process.Start
+//    - cmd.exe, powershell, bash, or other shells
+// 2. Identify any instance where user input (e.g., from request parameters, form fields, query strings) is directly or indirectly used to construct command-line arguments.
+// 3. Highlight vulnerable patterns such as:
+//    - String concatenation or interpolation involving user input
+//    - Absence of input validation or sanitization
+// 4. Suggest secure alternatives and refactor vulnerable code blocks using:
+//    - Input validation/whitelisting
+//    - Safe APIs (e.g., ProcessStartInfo.ArgumentList)
+//    - Avoiding shell usage altogether if possible
+
+// Additional Instructions:
+// - Check all C# (.cs) files in the workspace.
+// - Return a list of files and line numbers where issues are found.
+// - Provide a fixed version of the code for each finding.
+// - Comment each fix with explanation for the change.
+
+// Example vulnerable pattern to detect:
+// Process.Start("cmd.exe", "/c " + userInput);
+
+// Example secure fix to generate:
+// - Validate userInput with Regex or whitelisting.
+// - Use ProcessStartInfo and ArgumentList.
+// - Disable shell execution.
+
+// Begin analysis and remediation suggestions below:
+
+
+
+0000000000000000000
 # Enhanced Unit Test Instructions (.NET, C#, XUnit, Moq)
 Imports: Import required libraries for xUnit and Moq:
     Example:using Xunit;
